@@ -558,8 +558,12 @@ export default function ModulosPage() {
       : true
   )
 
-  const totalMonto  = modulosFiltrados.reduce((a, m) => a + (m.montoTotal  ?? 0), 0)
-  const totalPagado = modulosFiltrados.reduce((a, m) => a + m.montoPagado,         0)
+  const totalMonto    = modulosFiltrados.reduce((a, m) => a + (m.montoTotal ?? 0), 0)
+  const totalPagado   = modulosFiltrados.reduce((a, m) => a + m.montoPagado, 0)
+  // "Por cobrar" = mismo criterio que dashboard y pagos: APROBADO/ENTREGADO sin pagar
+  const totalPorCobrar = modulosFiltrados
+    .filter(m => ['APROBADO', 'ENTREGADO'].includes(m.estado) && !m.pagado)
+    .reduce((a, m) => a + ((m.montoTotal ?? 0) - m.montoPagado), 0)
 
   return (
     <div>
@@ -656,7 +660,7 @@ export default function ModulosPage() {
             <div style={{ display: 'flex', gap: '20px' }}>
               <span>Total: <strong style={{ color: '#e2e8f0' }}>${totalMonto.toFixed(0)}</strong></span>
               <span>Pagado: <strong style={{ color: '#10b981' }}>${totalPagado.toFixed(0)}</strong></span>
-              <span>Pendiente: <strong style={{ color: '#f59e0b' }}>${(totalMonto - totalPagado).toFixed(0)}</strong></span>
+              <span>Por cobrar: <strong style={{ color: '#f59e0b' }}>${totalPorCobrar.toFixed(0)}</strong></span>
             </div>
           </div>
         )}

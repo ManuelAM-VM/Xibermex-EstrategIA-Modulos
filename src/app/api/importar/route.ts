@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { detectarAlertaHoras } from '@/lib/utils'
 
+export const runtime = 'nodejs'
+
 // Datos de ejemplo para importar (los 22 módulos originales)
 const MODULOS_INICIALES = [
   { nombre: 'Login con roles', tipo: 'DESARROLLO', complejidad: 'MEDIA', horas: 8, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },

@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { detectarAlertaHoras } from '@/lib/utils'
 import * as XLSX from 'xlsx'
 
+// Forzar Node.js runtime (xlsx necesita Buffer/fs, no funciona en edge)
+export const runtime = 'nodejs'
+
 // Mapeo de nombres de colaborador del Excel a nombres en DB
 function normalizarColaborador(nombre: string): string {
   const n = nombre.trim().toUpperCase()

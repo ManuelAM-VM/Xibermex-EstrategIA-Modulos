@@ -49,7 +49,8 @@ export default function PagosPage() {
   }
 
   const filtrados     = modulos.filter(m => !filtroCol || m.colaborador.id === filtroCol)
-  const porPagar      = filtrados.filter(m => ['APROBADO','ENTREGADO'].includes(m.estado) && !m.pagado)
+  // Por pagar = cualquier módulo con monto asignado que no esté pagado, sin importar estado
+  const porPagar      = filtrados.filter(m => !m.pagado && (m.montoTotal ?? 0) > 0)
   const pagados       = filtrados.filter(m => m.pagado)
   const totalPorPagar = porPagar.reduce((a, m) => a + ((m.montoTotal ?? 0) - m.montoPagado), 0)
   const totalPagado   = pagados.reduce((a, m) => a + m.montoPagado, 0)

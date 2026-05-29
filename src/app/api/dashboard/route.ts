@@ -15,11 +15,7 @@ export async function GET() {
       prisma.modulo.count({ where: { estado: { in: ['ENTREGADO', 'APROBADO'] } } }),
       prisma.colaborador.findMany({
         where: { activo: true },
-        include: {
-          modulos: {
-            include: { pagos: true },
-          },
-        },
+        include: { modulos: { include: { pagos: true } } },
       }),
       prisma.modulo.findMany({
         where: { alertaHoras: true },
@@ -27,25 +23,25 @@ export async function GET() {
       }),
     ])
 
-    // "Por cobrar" = módulos APROBADO o ENTREGADO que no están pagados completamente
-    // Mismo criterio para el stat global y para cada colaborador
-    const ESTADOS_COBRABLES = ['APROBADO', 'ENTREGADO']
+    // "Por cobrar" = cualquier módulo con monto y que no esté pagado completamente
+    // Sin importar el estado — si tiene monto asignado, se debe cobrar
+    const esPorCobrar = (m: { montoTotal: number | null; montoPagado: number; pagado: boolean }) =>
+      !m.pagado && (m.montoTotal ?? 0) > 0
 
     const totalPorPagar = colaboradores.reduce((total, col) => {
       return total + col.modulos
-        .filter(m => ESTADOS_COBRABLES.includes(m.estado) && !m.pagado)
+        .filter(esPorCobrar)
         .reduce((acc, m) => acc + ((m.montoTotal || 0) - m.montoPagado), 0)
     }, 0)
 
-    // Stats por colaborador — usando el mismo criterio
+    // Stats por colaborador
     const statsColaboradores = colaboradores.map((col) => {
       const modulosActivos = col.modulos.filter(m =>
         ['PENDIENTE', 'EN_CURSO'].includes(m.estado)
       ).length
 
-      // Por cobrar: solo módulos aprobados/entregados sin pagar
       const porCobrar = col.modulos
-        .filter(m => ESTADOS_COBRABLES.includes(m.estado) && !m.pagado)
+        .filter(esPorCobrar)
         .reduce((acc, m) => acc + ((m.montoTotal || 0) - m.montoPagado), 0)
 
       const totalPagado = col.modulos.reduce((acc, m) => acc + m.montoPagado, 0)

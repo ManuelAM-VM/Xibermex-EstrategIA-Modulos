@@ -560,9 +560,9 @@ export default function ModulosPage() {
 
   const totalMonto    = modulosFiltrados.reduce((a, m) => a + (m.montoTotal ?? 0), 0)
   const totalPagado   = modulosFiltrados.reduce((a, m) => a + m.montoPagado, 0)
-  // "Por cobrar" = mismo criterio que dashboard y pagos: APROBADO/ENTREGADO sin pagar
+  // Por cobrar = cualquier módulo con monto asignado que no esté pagado
   const totalPorCobrar = modulosFiltrados
-    .filter(m => ['APROBADO', 'ENTREGADO'].includes(m.estado) && !m.pagado)
+    .filter(m => !m.pagado && (m.montoTotal ?? 0) > 0)
     .reduce((a, m) => a + ((m.montoTotal ?? 0) - m.montoPagado), 0)
 
   return (

@@ -158,7 +158,7 @@ export default function Sidebar() {
           backgroundColor: '#13131a',
           borderTop: '1px solid #1e1e2e',
           display: 'flex',
-          height: '56px',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}>
           {navItems.slice(0, 5).map((item) => {
             const Icon = item.icon
@@ -166,7 +166,8 @@ export default function Sidebar() {
             return (
               <Link key={item.href} href={item.href} style={{
                 flex: 1, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: '3px',
+                alignItems: 'center', justifyContent: 'center',
+                gap: '3px', height: '56px',
                 color: isActive ? '#7c3aed' : '#6b7280',
                 textDecoration: 'none', fontSize: '9px',
                 borderTop: isActive ? '2px solid #7c3aed' : '2px solid transparent',

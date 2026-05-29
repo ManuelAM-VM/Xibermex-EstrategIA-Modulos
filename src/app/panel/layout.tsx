@@ -11,11 +11,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       <Sidebar />
       <main style={{
         flex: 1,
-        // Desktop: offset del sidebar fijo
         marginLeft: isMobile ? 0 : '220px',
-        // Mobile: padding top (topbar) + bottom (bottom nav)
-        paddingTop:    isMobile ? '52px' : 0,
-        paddingBottom: isMobile ? '56px' : 0,
+        paddingTop: isMobile ? '52px' : 0,
+        // 56px nav + safe area iPhone (barra de inicio)
+        paddingBottom: isMobile ? 'calc(56px + env(safe-area-inset-bottom, 0px))' : 0,
         minHeight: '100vh',
         overflow: 'auto',
       }}>

@@ -10,6 +10,7 @@ import {
   COMPLEJIDAD_LABELS, ESTADO_LABELS, TIPO_TAREA_LABELS,
   TIPOS_TAREA, COMPLEJIDADES
 } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface Pago {
   id: string
@@ -58,10 +59,12 @@ function ModuloRow({
   modulo,
   onUpdate,
   onDelete,
+  isMobile,
 }: {
   modulo: Modulo
   onUpdate: (id: string, data: Partial<Modulo>) => void
   onDelete: (id: string) => void
+  isMobile: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const [saving, setSaving]     = useState(false)
@@ -175,109 +178,106 @@ function ModuloRow({
     >
       {/* ── Fila principal (siempre visible) ── */}
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 120px 110px 100px 110px 90px 72px',
-          gap: '10px',
-          padding: '11px 14px',
-          alignItems: 'center',
-          cursor: 'pointer',
-        }}
+        style={{ padding: isMobile ? '12px' : '11px 14px', cursor: 'pointer' }}
         onClick={() => setExpanded(!expanded)}
       >
-        {/* Nombre + proyecto */}
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '500', color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {modulo.nombre}
+        {isMobile ? (
+          /* Móvil: layout en columna */
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <div style={{ flex: 1, minWidth: 0, marginRight: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginBottom: '2px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0' }}>{modulo.nombre}</span>
+                  {modulo.alertaHoras && <AlertTriangle size={12} color="#f59e0b" />}
+                  {modulo.pagado && <CheckCircle size={12} color="#10b981" />}
+                </div>
+                <span style={{ fontSize: '11px', color: '#4b5563' }}>
+                  {modulo.proyecto.nombre} · {modulo.colaborador.nombre.split(' ')[0]}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                <button onClick={e => { e.stopPropagation(); onDelete(modulo.id) }}
+                  style={{ background: 'none', border: 'none', color: '#374151', padding: '4px', display: 'flex' }}>
+                  <Trash2 size={14} />
+                </button>
+                <span style={{ color: '#4b5563' }}>{expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: '11px', backgroundColor: estadoColor.bg, color: estadoColor.text, padding: '3px 8px', borderRadius: '4px' }}>
+                {ESTADO_LABELS[estado] ?? estado}
+              </span>
+              <span style={{ fontSize: '11px', color: '#6b7280', backgroundColor: '#1e1e2e', padding: '3px 8px', borderRadius: '4px' }}>
+                {TIPO_TAREA_LABELS[modulo.tipoTarea] ?? modulo.tipoTarea}
+              </span>
+              <span style={{ fontSize: '11px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Clock size={10} />
+                {expanded ? horasEstimadas : modulo.horasEstimadas}h
+                {(expanded ? horasReales : String(modulo.horasReales ?? '')) ? ` / ${expanded ? horasReales : modulo.horasReales}h real` : ''}
+              </span>
+              {(dirty ? montoPreview : modulo.montoTotal) != null && (
+                <span style={{ fontSize: '13px', fontWeight: '700', color: modulo.pagado ? '#10b981' : '#f59e0b', marginLeft: 'auto' }}>
+                  ${(dirty ? montoPreview : (modulo.montoTotal ?? 0)).toFixed(0)}
+                </span>
+              )}
+            </div>
+          </>
+        ) : (
+          /* Desktop: grid */
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 110px 100px 110px 90px 72px', gap: '10px', alignItems: 'center' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '13px', fontWeight: '500', color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {modulo.nombre}
+                </span>
+                {modulo.alertaHoras && <AlertTriangle size={11} color="#f59e0b" style={{ flexShrink: 0 }} />}
+                {modulo.pagado && <CheckCircle size={11} color="#10b981" style={{ flexShrink: 0 }} />}
+              </div>
+              <span style={{ fontSize: '11px', color: '#4b5563' }}>
+                {modulo.proyecto.nombre} · {modulo.colaborador.nombre.split(' ')[0]}
+              </span>
+            </div>
+            <span style={{ fontSize: '11px', color: '#6b7280' }}>{TIPO_TAREA_LABELS[modulo.tipoTarea] ?? modulo.tipoTarea}</span>
+            <span style={{ fontSize: '11px', color: '#6b7280' }}>{COMPLEJIDAD_LABELS[modulo.complejidad] ?? modulo.complejidad}</span>
+            <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Clock size={10} />{expanded ? horasEstimadas : modulo.horasEstimadas}h est.
+              </div>
+              {(expanded ? horasReales : String(modulo.horasReales ?? '')) && (
+                <div style={{ color: '#6b7280', fontSize: '11px' }}>{expanded ? horasReales : modulo.horasReales}h real</div>
+              )}
+            </div>
+            <span style={{ fontSize: '11px', backgroundColor: estadoColor.bg, color: estadoColor.text, padding: '3px 8px', borderRadius: '4px', display: 'inline-block', whiteSpace: 'nowrap' }}
+              onClick={e => e.stopPropagation()}>
+              {ESTADO_LABELS[estado] ?? estado}
             </span>
-            {modulo.alertaHoras && <AlertTriangle size={11} color="#f59e0b" style={{ flexShrink: 0 }} />}
-            {modulo.pagado       && <CheckCircle  size={11} color="#10b981" style={{ flexShrink: 0 }} />}
-          </div>
-          <span style={{ fontSize: '11px', color: '#4b5563' }}>
-            {modulo.proyecto.nombre} · {modulo.colaborador.nombre.split(' ')[0]}
-          </span>
-        </div>
-
-        {/* Tipo */}
-        <span style={{ fontSize: '11px', color: '#6b7280' }}>
-          {TIPO_TAREA_LABELS[modulo.tipoTarea] ?? modulo.tipoTarea}
-        </span>
-
-        {/* Complejidad */}
-        <span style={{ fontSize: '11px', color: '#6b7280' }}>
-          {COMPLEJIDAD_LABELS[modulo.complejidad] ?? modulo.complejidad}
-        </span>
-
-        {/* Horas */}
-        <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-            <Clock size={10} />
-            {expanded ? horasEstimadas : modulo.horasEstimadas}h est.
-          </div>
-          {(expanded ? horasReales : String(modulo.horasReales ?? '')) && (
-            <div style={{ color: '#6b7280', fontSize: '11px' }}>
-              {expanded ? horasReales : modulo.horasReales}h real
+            <div style={{ fontSize: '12px' }}>
+              {(dirty ? montoPreview : modulo.montoTotal) != null && (
+                <div style={{ color: modulo.pagado ? '#10b981' : '#f59e0b', fontWeight: '600' }}>
+                  ${(dirty ? montoPreview : (modulo.montoTotal ?? 0)).toFixed(0)}
+                </div>
+              )}
+              {modulo.montoPagado > 0 && !modulo.pagado && (
+                <div style={{ color: '#6b7280', fontSize: '11px' }}>${modulo.montoPagado.toFixed(0)} pag.</div>
+              )}
             </div>
-          )}
-        </div>
-        <span
-          style={{
-            fontSize: '11px',
-            backgroundColor: estadoColor.bg,
-            color: estadoColor.text,
-            padding: '3px 8px',
-            borderRadius: '4px',
-            display: 'inline-block',
-            whiteSpace: 'nowrap',
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {ESTADO_LABELS[estado] ?? estado}
-        </span>
-
-        {/* Monto */}
-        <div style={{ fontSize: '12px' }}>
-          {(dirty ? montoPreview : modulo.montoTotal) != null && (
-            <div style={{ color: modulo.pagado ? '#10b981' : '#f59e0b', fontWeight: '600' }}>
-              ${(dirty ? montoPreview : (modulo.montoTotal ?? 0)).toFixed(0)}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+              <button onClick={e => { e.stopPropagation(); onDelete(modulo.id) }}
+                style={{ background: 'none', border: 'none', color: '#374151', padding: '4px', display: 'flex' }} title="Eliminar">
+                <Trash2 size={13} />
+              </button>
+              <div style={{ color: '#4b5563' }}>{expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}</div>
             </div>
-          )}
-          {modulo.montoPagado > 0 && !modulo.pagado && (
-            <div style={{ color: '#6b7280', fontSize: '11px' }}>
-              ${modulo.montoPagado.toFixed(0)} pag.
-            </div>
-          )}
-        </div>
-
-        {/* Expand toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(modulo.id) }}
-            style={{ background: 'none', border: 'none', color: '#374151', padding: '4px', display: 'flex' }}
-            title="Eliminar"
-          >
-            <Trash2 size={13} />
-          </button>
-          <div style={{ color: '#4b5563' }}>
-            {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── Panel expandido ── */}
       {expanded && (
-        <div
-          style={{
-            borderTop: '1px solid #2a2a3a',
-            padding: '16px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '14px',
-          }}
-        >
-          {/* Fila de edición: estado + horas estimadas + horas reales + tipo + complejidad */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '12px' }}>
+        <div style={{ borderTop: '1px solid #2a2a3a', padding: isMobile ? '12px' : '16px 14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+          {/* Campos de edición */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr 1fr', gap: '10px' }}>
             <div>
               <label style={labelSt}>Estado</label>
               <select value={estado} onChange={(e) => setEstado(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
@@ -288,24 +288,11 @@ function ModuloRow({
             </div>
             <div>
               <label style={labelSt}>Horas estimadas</label>
-              <input
-                type="number"
-                value={horasEstimadas}
-                onChange={(e) => setHorasEstimadas(e.target.value)}
-                min="0" step="0.5"
-                style={{ fontSize: '13px' }}
-              />
+              <input type="number" value={horasEstimadas} onChange={(e) => setHorasEstimadas(e.target.value)} min="0" step="0.5" style={{ fontSize: '13px' }} />
             </div>
             <div>
               <label style={labelSt}>Horas reales</label>
-              <input
-                type="number"
-                value={horasReales}
-                onChange={(e) => setHorasReales(e.target.value)}
-                placeholder="Sin registrar"
-                min="0" step="0.5"
-                style={{ fontSize: '13px' }}
-              />
+              <input type="number" value={horasReales} onChange={(e) => setHorasReales(e.target.value)} placeholder="Sin registrar" min="0" step="0.5" style={{ fontSize: '13px' }} />
             </div>
             <div>
               <label style={labelSt}>Tipo de tarea</label>
@@ -341,7 +328,7 @@ function ModuloRow({
             <p style={{ fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
               Configuración de pago
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px', alignItems: 'stretch' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: '12px', alignItems: 'stretch' }}>
 
               {/* Modo */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -418,7 +405,7 @@ function ModuloRow({
           </div>
 
           {/* Info de solo lectura */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '10px' }}>
             <InfoField label="Colaborador"  value={modulo.colaborador.nombre} />
             <InfoField label="Proyecto"     value={modulo.proyecto.nombre} />
             <InfoField label="Tarifa/hora"  value={`$${modulo.tarifaHora}/hr`} />
@@ -516,10 +503,11 @@ function InfoField({ label, value }: { label: string; value: string }) {
 
 // ─── Página principal ────────────────────────────────────────────────────────
 export default function ModulosPage() {
-  const [modulos, setModulos]           = useState<Modulo[]>([])
+  const [modulos, setModulos]             = useState<Modulo[]>([])
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
-  const [proyectos, setProyectos]       = useState<Proyecto[]>([])
-  const [loading, setLoading]           = useState(true)
+  const [proyectos, setProyectos]         = useState<Proyecto[]>([])
+  const [loading, setLoading]             = useState(true)
+  const isMobile = useIsMobile()
 
   const [filtros, setFiltros] = useState({
     colaboradorId: '',
@@ -576,27 +564,33 @@ export default function ModulosPage() {
   return (
     <div>
       <PageHeader title="Todos los módulos" subtitle="Lista completa con filtros" onRefresh={fetchData} />
-      <div style={{ padding: '24px 32px' }}>
+      <div style={{ padding: isMobile ? '14px' : '24px 32px' }}>
 
         {/* Filtros */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <select value={filtros.colaboradorId} onChange={(e) => setFiltros({ ...filtros, colaboradorId: e.target.value })}>
-            <option value="">Todos los devs</option>
-            {colaboradores.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-          </select>
-          <select value={filtros.proyectoId} onChange={(e) => setFiltros({ ...filtros, proyectoId: e.target.value })}>
-            <option value="">Todos los proyectos</option>
-            {proyectos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-          </select>
-          <select value={filtros.estado} onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {!isMobile && (
+            <>
+              <select value={filtros.colaboradorId} onChange={(e) => setFiltros({ ...filtros, colaboradorId: e.target.value })}>
+                <option value="">Todos los devs</option>
+                {colaboradores.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+              </select>
+              <select value={filtros.proyectoId} onChange={(e) => setFiltros({ ...filtros, proyectoId: e.target.value })}>
+                <option value="">Todos los proyectos</option>
+                {proyectos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+              </select>
+            </>
+          )}
+          <select value={filtros.estado} onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })} style={{ flex: isMobile ? 1 : 'none' }}>
             <option value="">Todos los estatus</option>
             {Object.entries(ESTADO_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <select value={filtros.complejidad} onChange={(e) => setFiltros({ ...filtros, complejidad: e.target.value })}>
-            <option value="">Todas las complejidades</option>
-            {Object.entries(COMPLEJIDAD_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-          <div style={{ position: 'relative', flex: 1, minWidth: '180px' }}>
+          {!isMobile && (
+            <select value={filtros.complejidad} onChange={(e) => setFiltros({ ...filtros, complejidad: e.target.value })}>
+              <option value="">Todas las complejidades</option>
+              {Object.entries(COMPLEJIDAD_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          )}
+          <div style={{ position: 'relative', flex: 1, minWidth: isMobile ? '100%' : '180px' }}>
             <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
             <input
               value={filtros.busqueda}
@@ -605,28 +599,31 @@ export default function ModulosPage() {
               style={{ paddingLeft: '30px' }}
             />
           </div>
+          {isMobile && (
+            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+              <select value={filtros.colaboradorId} onChange={(e) => setFiltros({ ...filtros, colaboradorId: e.target.value })} style={{ flex: 1 }}>
+                <option value="">Todos los devs</option>
+                {colaboradores.map((c) => <option key={c.id} value={c.id}>{c.nombre.split(' ')[0]}</option>)}
+              </select>
+              <select value={filtros.proyectoId} onChange={(e) => setFiltros({ ...filtros, proyectoId: e.target.value })} style={{ flex: 1 }}>
+                <option value="">Todos los proyectos</option>
+                {proyectos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+              </select>
+            </div>
+          )}
         </div>
 
-        {/* Header de columnas */}
-        {!loading && modulosFiltrados.length > 0 && (
+        {/* Header de columnas — solo desktop */}
+        {!loading && !isMobile && modulosFiltrados.length > 0 && (
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 120px 110px 100px 110px 90px 72px',
-            gap: '10px',
-            padding: '6px 14px',
-            fontSize: '10px',
-            color: '#4b5563',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            marginBottom: '4px',
+            gap: '10px', padding: '6px 14px',
+            fontSize: '10px', color: '#4b5563',
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px',
           }}>
-            <span>Módulo</span>
-            <span>Tipo</span>
-            <span>Complejidad</span>
-            <span>Horas</span>
-            <span>Estado</span>
-            <span>Monto</span>
-            <span></span>
+            <span>Módulo</span><span>Tipo</span><span>Complejidad</span>
+            <span>Horas</span><span>Estado</span><span>Monto</span><span></span>
           </div>
         )}
 
@@ -639,13 +636,14 @@ export default function ModulosPage() {
             <span style={{ color: '#60a5fa', fontSize: '14px' }}>No hay módulos con esos filtros.</span>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '6px' }}>
             {modulosFiltrados.map((m) => (
               <ModuloRow
                 key={m.id}
                 modulo={m}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}
+                isMobile={isMobile}
               />
             ))}
           </div>

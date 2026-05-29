@@ -15,7 +15,11 @@ export async function GET() {
       prisma.modulo.count({ where: { estado: { in: ['ENTREGADO', 'APROBADO'] } } }),
       prisma.colaborador.findMany({
         where: { activo: true },
-        include: { modulos: { include: { pagos: true } } },
+        include: {
+          modulos: {
+            include: { pagos: true },
+          },
+        },
       }),
       prisma.modulo.findMany({
         where: { alertaHoras: true },
@@ -23,35 +27,46 @@ export async function GET() {
       }),
     ])
 
-    // Total por pagar
-    const modulosPorPagar = await prisma.modulo.findMany({
-      where: { estado: { in: ['APROBADO', 'ENTREGADO'] }, pagado: false },
-    })
-    const totalPorPagar = modulosPorPagar.reduce(
-      (acc, m) => acc + ((m.montoTotal || 0) - m.montoPagado), 0
-    )
+    // "Por cobrar" = módulos APROBADO o ENTREGADO que no están pagados completamente
+    // Mismo criterio para el stat global y para cada colaborador
+    const ESTADOS_COBRABLES = ['APROBADO', 'ENTREGADO']
 
-    // Stats por colaborador
+    const totalPorPagar = colaboradores.reduce((total, col) => {
+      return total + col.modulos
+        .filter(m => ESTADOS_COBRABLES.includes(m.estado) && !m.pagado)
+        .reduce((acc, m) => acc + ((m.montoTotal || 0) - m.montoPagado), 0)
+    }, 0)
+
+    // Stats por colaborador — usando el mismo criterio
     const statsColaboradores = colaboradores.map((col) => {
       const modulosActivos = col.modulos.filter(m =>
         ['PENDIENTE', 'EN_CURSO'].includes(m.estado)
       ).length
-      const porCobrar = col.modulos.reduce((acc, m) => {
-        if (!m.pagado) return acc + ((m.montoTotal || 0) - m.montoPagado)
-        return acc
-      }, 0)
+
+      // Por cobrar: solo módulos aprobados/entregados sin pagar
+      const porCobrar = col.modulos
+        .filter(m => ESTADOS_COBRABLES.includes(m.estado) && !m.pagado)
+        .reduce((acc, m) => acc + ((m.montoTotal || 0) - m.montoPagado), 0)
+
       const totalPagado = col.modulos.reduce((acc, m) => acc + m.montoPagado, 0)
 
       return {
-        id: col.id, nombre: col.nombre, email: col.email,
+        id: col.id,
+        nombre: col.nombre,
+        email: col.email,
         totalModulos: col.modulos.length,
-        modulosActivos, porCobrar, totalPagado,
+        modulosActivos,
+        porCobrar,
+        totalPagado,
       }
     })
 
     return NextResponse.json({
-      totalModulos, pendientes, entregados,
-      totalPorPagar, statsColaboradores,
+      totalModulos,
+      pendientes,
+      entregados,
+      totalPorPagar,
+      statsColaboradores,
       alertasHoras: modulosConAlerta,
     })
   } catch (error) {

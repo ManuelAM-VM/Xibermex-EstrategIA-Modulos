@@ -35,35 +35,36 @@ export async function PATCH(
       return NextResponse.json({ error: 'Módulo no encontrado' }, { status: 404 })
     }
 
+    // Extraer _horasParaPago (campo virtual, no se guarda en DB)
+    const { _horasParaPago, ...bodyLimpio } = body
+
     // Calcular montoTotal según el modo de pago
-    const modoPago       = body.modoPago       ?? actual.modoPago       ?? 'POR_HORA'
-    const tarifaHora     = body.tarifaHora     != null ? parseFloat(body.tarifaHora)     : actual.tarifaHora
-    const horasEstimadas = body.horasEstimadas != null ? parseFloat(body.horasEstimadas) : actual.horasEstimadas
-    const montoFijo      = body.montoFijo      != null ? parseFloat(body.montoFijo)      : actual.montoFijo
+    const modoPago       = bodyLimpio.modoPago       ?? actual.modoPago       ?? 'POR_HORA'
+    const tarifaHora     = bodyLimpio.tarifaHora     != null ? parseFloat(bodyLimpio.tarifaHora)     : actual.tarifaHora
+    const horasEstimadas = bodyLimpio.horasEstimadas != null ? parseFloat(bodyLimpio.horasEstimadas) : actual.horasEstimadas
+    const montoFijo      = bodyLimpio.montoFijo      != null ? parseFloat(bodyLimpio.montoFijo)      : actual.montoFijo
+
+    // Usar horas para pago si se pasaron, si no usar estimadas
+    const horasParaCalculo = _horasParaPago != null ? parseFloat(_horasParaPago) : horasEstimadas
 
     let montoTotal: number | null = actual.montoTotal
 
     if (modoPago === 'POR_HORA') {
-      // tarifa es $/hora × horas estimadas
-      montoTotal = tarifaHora * horasEstimadas
+      montoTotal = tarifaHora * horasParaCalculo
     } else if (modoPago === 'POR_DIA') {
-      // tarifaHora aquí guarda el valor $/día; montoTotal = tarifaDia × (horas / 8)
-      // Pero lo más simple: el usuario ingresa la tarifa diaria y nosotros calculamos
-      // montoTotal = tarifaDia × ceil(horasEstimadas / 8)
-      const diasEstimados = Math.ceil(horasEstimadas / 8) || 1
+      const diasEstimados = Math.ceil(horasParaCalculo / 8) || 1
       montoTotal = tarifaHora * diasEstimados
     } else if (modoPago === 'MONTO_FIJO') {
       montoTotal = montoFijo ?? actual.montoTotal
     }
 
-    // Recalcular pagado si cambió el montoTotal
     const montoPagado = actual.montoPagado
     const pagado = montoTotal != null && montoPagado >= montoTotal && montoTotal > 0
 
     const modulo = await prisma.modulo.update({
       where: { id },
       data: {
-        ...body,
+        ...bodyLimpio,
         modoPago,
         tarifaHora,
         montoFijo: modoPago === 'MONTO_FIJO' ? (montoFijo ?? null) : null,

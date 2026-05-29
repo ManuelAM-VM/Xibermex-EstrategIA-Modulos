@@ -68,23 +68,31 @@ function ModuloRow({
   const [toggling, setToggling] = useState(false)
 
   // Campos editables
-  const [estado, setEstado]           = useState(modulo.estado)
-  const [horasReales, setHorasReales] = useState(String(modulo.horasReales ?? ''))
-  const [descripcion, setDescripcion] = useState(modulo.descripcion ?? '')
-  const [tipoTarea, setTipoTarea]     = useState(modulo.tipoTarea)
-  const [complejidad, setComplejidad] = useState(modulo.complejidad)
+  const [estado, setEstado]                 = useState(modulo.estado)
+  const [horasEstimadas, setHorasEstimadas] = useState(String(modulo.horasEstimadas))
+  const [horasReales, setHorasReales]       = useState(String(modulo.horasReales ?? ''))
+  const [descripcion, setDescripcion]       = useState(modulo.descripcion ?? '')
+  const [tipoTarea, setTipoTarea]           = useState(modulo.tipoTarea)
+  const [complejidad, setComplejidad]       = useState(modulo.complejidad)
 
   // Modo de pago
-  const [modoPago, setModoPago]       = useState(modulo.modoPago ?? 'POR_HORA')
-  const [tarifa, setTarifa]           = useState(String(modulo.tarifaHora ?? 500))
-  const [montoFijo, setMontoFijo]     = useState(String(modulo.montoFijo ?? ''))
+  const [modoPago, setModoPago]   = useState(modulo.modoPago ?? 'POR_HORA')
+  const [tarifa, setTarifa]       = useState(String(modulo.tarifaHora ?? 500))
+  const [montoFijo, setMontoFijo] = useState(String(modulo.montoFijo ?? ''))
+  // Base de horas para el cálculo: ESTIMADAS o REALES
+  const [baseHoras, setBaseHoras] = useState<'ESTIMADAS' | 'REALES'>('ESTIMADAS')
 
-  // Preview del monto calculado según modo de pago
+  // Horas activas según la base seleccionada
+  const horasActivas = (() => {
+    if (baseHoras === 'REALES' && horasReales) return parseFloat(horasReales) || 0
+    return parseFloat(horasEstimadas) || 0
+  })()
+
+  // Preview del monto calculado
   const montoPreview = (() => {
     const t = parseFloat(tarifa) || 0
-    const h = modulo.horasEstimadas
-    if (modoPago === 'POR_HORA')   return t * h
-    if (modoPago === 'POR_DIA')    return t * (Math.ceil(h / 8) || 1)
+    if (modoPago === 'POR_HORA')   return t * horasActivas
+    if (modoPago === 'POR_DIA')    return t * (Math.ceil(horasActivas / 8) || 1)
     if (modoPago === 'MONTO_FIJO') return parseFloat(montoFijo) || 0
     return 0
   })()
@@ -99,6 +107,7 @@ function ModuloRow({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           estado,
+          horasEstimadas: parseFloat(horasEstimadas) || modulo.horasEstimadas,
           horasReales: horasReales ? parseFloat(horasReales) : null,
           descripcion: descripcion || null,
           tipoTarea,
@@ -106,6 +115,8 @@ function ModuloRow({
           modoPago,
           tarifaHora: parseFloat(tarifa) || 500,
           montoFijo: modoPago === 'MONTO_FIJO' ? (parseFloat(montoFijo) || null) : null,
+          // Pasar las horas activas para que la API calcule el montoTotal correcto
+          _horasParaPago: horasActivas,
           ...(estado === 'APROBADO' && !modulo.fechaEntrega
             ? { fechaEntrega: new Date().toISOString() }
             : {}),
@@ -143,6 +154,7 @@ function ModuloRow({
 
   const dirty =
     estado !== modulo.estado ||
+    horasEstimadas !== String(modulo.horasEstimadas) ||
     horasReales !== String(modulo.horasReales ?? '') ||
     descripcion !== (modulo.descripcion ?? '') ||
     tipoTarea !== modulo.tipoTarea ||
@@ -201,14 +213,14 @@ function ModuloRow({
         <div style={{ fontSize: '12px', color: '#9ca3af' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
             <Clock size={10} />
-            {modulo.horasEstimadas}h est.
+            {expanded ? horasEstimadas : modulo.horasEstimadas}h est.
           </div>
-          {modulo.horasReales != null && (
-            <div style={{ color: '#6b7280', fontSize: '11px' }}>{modulo.horasReales}h real</div>
+          {(expanded ? horasReales : String(modulo.horasReales ?? '')) && (
+            <div style={{ color: '#6b7280', fontSize: '11px' }}>
+              {expanded ? horasReales : modulo.horasReales}h real
+            </div>
           )}
         </div>
-
-        {/* Estado badge */}
         <span
           style={{
             fontSize: '11px',
@@ -264,19 +276,25 @@ function ModuloRow({
             gap: '14px',
           }}
         >
-          {/* Fila de edición: estado + horas reales + tipo + complejidad */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+          {/* Fila de edición: estado + horas estimadas + horas reales + tipo + complejidad */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '12px' }}>
             <div>
               <label style={labelSt}>Estado</label>
-              <select
-                value={estado}
-                onChange={(e) => setEstado(e.target.value)}
-                style={{ width: '100%', fontSize: '13px' }}
-              >
+              <select value={estado} onChange={(e) => setEstado(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
                 {Object.entries(ESTADO_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label style={labelSt}>Horas estimadas</label>
+              <input
+                type="number"
+                value={horasEstimadas}
+                onChange={(e) => setHorasEstimadas(e.target.value)}
+                min="0" step="0.5"
+                style={{ fontSize: '13px' }}
+              />
             </div>
             <div>
               <label style={labelSt}>Horas reales</label>
@@ -284,18 +302,14 @@ function ModuloRow({
                 type="number"
                 value={horasReales}
                 onChange={(e) => setHorasReales(e.target.value)}
-                placeholder={`Est. ${modulo.horasEstimadas}h`}
+                placeholder="Sin registrar"
                 min="0" step="0.5"
                 style={{ fontSize: '13px' }}
               />
             </div>
             <div>
               <label style={labelSt}>Tipo de tarea</label>
-              <select
-                value={tipoTarea}
-                onChange={(e) => setTipoTarea(e.target.value)}
-                style={{ width: '100%', fontSize: '13px' }}
-              >
+              <select value={tipoTarea} onChange={(e) => setTipoTarea(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
                 {TIPOS_TAREA.map((t) => (
                   <option key={t} value={t}>{TIPO_TAREA_LABELS[t]}</option>
                 ))}
@@ -303,11 +317,7 @@ function ModuloRow({
             </div>
             <div>
               <label style={labelSt}>Complejidad</label>
-              <select
-                value={complejidad}
-                onChange={(e) => setComplejidad(e.target.value)}
-                style={{ width: '100%', fontSize: '13px' }}
-              >
+              <select value={complejidad} onChange={(e) => setComplejidad(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
                 {COMPLEJIDADES.map((c) => (
                   <option key={c} value={c}>{COMPLEJIDAD_LABELS[c]}</option>
                 ))}
@@ -327,18 +337,12 @@ function ModuloRow({
           </div>
 
           {/* ── Modo de pago ── */}
-          <div
-            style={{
-              backgroundColor: '#13131a',
-              border: '1px solid #1e1e2e',
-              borderRadius: '8px',
-              padding: '14px',
-            }}
-          >
+          <div style={{ backgroundColor: '#13131a', border: '1px solid #1e1e2e', borderRadius: '8px', padding: '14px' }}>
             <p style={{ fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
               Configuración de pago
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', alignItems: 'stretch' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px', alignItems: 'stretch' }}>
+
               {/* Modo */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <label style={labelSt}>Modo de pago</label>
@@ -358,54 +362,53 @@ function ModuloRow({
                 </select>
               </div>
 
+              {/* Base de horas */}
+              {modoPago !== 'MONTO_FIJO' && (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label style={labelSt}>Cobrar con base en</label>
+                  <select
+                    value={baseHoras}
+                    onChange={(e) => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')}
+                    style={{ width: '100%', fontSize: '13px', flex: 1 }}
+                  >
+                    <option value="ESTIMADAS">Horas estimadas ({horasEstimadas}h)</option>
+                    <option value="REALES" disabled={!horasReales}>
+                      Horas reales {horasReales ? `(${horasReales}h)` : '(sin registrar)'}
+                    </option>
+                  </select>
+                </div>
+              )}
+
               {/* Tarifa o monto fijo */}
               {modoPago !== 'MONTO_FIJO' ? (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={labelSt}>
-                    {modoPago === 'POR_HORA' ? 'Tarifa por hora ($)' : 'Tarifa por día ($)'}
-                  </label>
-                  <input
-                    type="number"
-                    value={tarifa}
-                    onChange={(e) => setTarifa(e.target.value)}
-                    min="0"
-                    step="50"
-                    style={{ fontSize: '13px', flex: 1 }}
-                  />
+                  <label style={labelSt}>{modoPago === 'POR_HORA' ? 'Tarifa por hora ($)' : 'Tarifa por día ($)'}</label>
+                  <input type="number" value={tarifa} onChange={(e) => setTarifa(e.target.value)} min="0" step="50" style={{ fontSize: '13px', flex: 1 }} />
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={labelSt}>Monto fijo total ($)</label>
-                  <input
-                    type="number"
-                    value={montoFijo}
-                    onChange={(e) => setMontoFijo(e.target.value)}
-                    placeholder="Ej. 5000"
-                    min="0"
-                    style={{ fontSize: '13px', flex: 1 }}
-                  />
+                  <input type="number" value={montoFijo} onChange={(e) => setMontoFijo(e.target.value)} placeholder="Ej. 5000" min="0" style={{ fontSize: '13px', flex: 1 }} />
                 </div>
               )}
 
-              {/* Preview del monto calculado */}
-              <div
-                style={{
-                  backgroundColor: '#1a1a24',
-                  border: '1px solid #2a2a3a',
-                  borderRadius: '6px',
-                  padding: '8px 12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+              {/* Preview */}
+              <div style={{
+                backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px',
+                padding: '8px 12px', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
                 <p style={{ fontSize: '10px', color: '#6b7280', marginBottom: '4px', textAlign: 'center' }}>
                   {modoPago === 'POR_HORA'
-                    ? `${modulo.horasEstimadas}h × $${tarifa}/hr`
+                    ? `${horasActivas}h × $${tarifa}/hr`
                     : modoPago === 'POR_DIA'
-                    ? `${Math.ceil(modulo.horasEstimadas / 8) || 1} día(s) × $${tarifa}`
+                    ? `${Math.ceil(horasActivas / 8) || 1} día(s) × $${tarifa}`
                     : 'Monto fijo'}
+                  {modoPago !== 'MONTO_FIJO' && (
+                    <span style={{ color: '#4b5563', display: 'block' }}>
+                      base: {baseHoras === 'REALES' ? 'reales' : 'estimadas'}
+                    </span>
+                  )}
                 </p>
                 <p style={{ fontSize: '18px', fontWeight: '700', color: '#a78bfa', margin: 0 }}>
                   ${montoPreview.toFixed(0)}

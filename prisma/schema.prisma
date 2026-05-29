@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Colaborador {
+  id        String   @id @default(cuid())
+  nombre    String
+  email     String?  @unique
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  modulos   Modulo[]
+  pagos     Pago[]
+
+  @@map("colaboradores")
+}
+
+model Proyecto {
+  id        String   @id @default(cuid())
+  nombre    String   @unique
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  modulos   Modulo[]
+
+  @@map("proyectos")
+}
+
+model Modulo {
+  id             String   @id @default(cuid())
+  nombre         String
+  descripcion    String?
+  tipoTarea      String   @default("DESARROLLO")
+  complejidad    String   @default("MEDIA")
+  horasEstimadas Float
+  horasReales    Float?
+  estado         String   @default("PENDIENTE")
+  tarifaHora     Float    @default(500)
+  modoPago       String   @default("POR_HORA")   // POR_HORA | POR_DIA | MONTO_FIJO
+  montoFijo      Float?                           // usado cuando modoPago = MONTO_FIJO
+  montoTotal     Float?
+  pagado         Boolean  @default(false)
+  montoPagado    Float    @default(0)
+  fechaEntrega   DateTime?
+  notasIA        String?
+  alertaHoras    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  colaboradorId  String
+  colaborador    Colaborador @relation(fields: [colaboradorId], references: [id])
+
+  proyectoId     String
+  proyecto       Proyecto    @relation(fields: [proyectoId], references: [id])
+
+  pagos          Pago[]
+
+  @@map("modulos")
+}
+
+model Pago {
+  id            String   @id @default(cuid())
+  monto         Float
+  fecha         DateTime @default(now())
+  notas         String?
+  createdAt     DateTime @default(now())
+
+  moduloId      String
+  modulo        Modulo      @relation(fields: [moduloId], references: [id])
+
+  colaboradorId String
+  colaborador   Colaborador @relation(fields: [colaboradorId], references: [id])
+
+  @@map("pagos")
+}
+
+model Configuracion {
+  id        String   @id @default(cuid())
+  clave     String   @unique
+  valor     String
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("configuracion")
+}

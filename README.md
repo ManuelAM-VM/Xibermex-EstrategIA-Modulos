@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EstrategIA — Gestión de Módulos y Pagos
 
-## Getting Started
+Sistema de gestión de módulos de desarrollo con control de pagos, análisis IA y seguimiento por colaborador.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router)
+- **PostgreSQL** (base de datos)
+- **Prisma 7** (ORM)
+- **Tailwind CSS 4**
+- **TypeScript**
+
+## Setup
+
+### 1. Configurar PostgreSQL
+
+Crea la base de datos:
+
+```sql
+CREATE DATABASE strategia_db;
+```
+
+Luego ejecuta el script de setup:
+
+```bash
+psql -U postgres -d strategia_db -f prisma/setup.sql
+```
+
+### 2. Variables de entorno
+
+Edita el archivo `.env` con tus credenciales:
+
+```env
+DATABASE_URL="postgresql://TU_USUARIO:TU_PASSWORD@localhost:5432/strategia_db?schema=public"
+```
+
+### 3. Instalar dependencias
+
+```bash
+npm install
+```
+
+### 4. Iniciar la app
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Funcionalidades
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Página | Descripción |
+|--------|-------------|
+| **Dashboard** | Stats generales, resumen por colaborador, alertas de horas |
+| **Registrar módulo** | Formulario con análisis IA opcional |
+| **Aprobar** | Lista de módulos pendientes para aprobar/rechazar |
+| **Todos los módulos** | Lista completa con filtros por dev, proyecto, estado, complejidad |
+| **Análisis IA** | Verifica si las horas estimadas son razonables |
+| **Pagos** | Control de cobros pendientes y pagados |
+| **Importar datos** | Carga los 22 módulos de ejemplo |
 
-## Learn More
+## Configuración del sidebar
 
-To learn more about Next.js, take a look at the following resources:
+- **$/día** y **hrs/día**: Calculan automáticamente la tarifa por hora
+- **Anthropic API Key**: Opcional, para análisis IA real con Claude
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Alertas de horas
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+El sistema detecta automáticamente estimaciones fuera de rango:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Complejidad | Rango esperado |
+|-------------|----------------|
+| Baja | 1–4 horas |
+| Media | 4–12 horas |
+| Alta | 12–24 horas |
+| Muy Alta | 24–80 horas |

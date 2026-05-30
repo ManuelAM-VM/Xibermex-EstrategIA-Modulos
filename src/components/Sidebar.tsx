@@ -30,6 +30,8 @@ export default function Sidebar() {
   const isMobile  = useIsMobile()
   const [menuOpen, setMenuOpen] = useState(false)
   const [showApiKey, setShowApiKey] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [config, setConfig] = useState<Config>({
     tarifa_dia: '500', horas_dia: '4', anthropic_api_key: '',
   })
@@ -52,12 +54,34 @@ export default function Sidebar() {
 
   const tarifaHora = parseFloat(config.tarifa_dia) / parseFloat(config.horas_dia) || 0
 
-  const handleSaveConfig = async () => {
-    await fetch('/api/configuracion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config),
-    })
+  const handleSaveConfig = async (newConfig?: typeof config) => {
+    const toSave = newConfig ?? config
+    setSaving(true)
+    setSaved(false)
+    try {
+      await fetch('/api/configuracion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(toSave),
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Guardar inmediatamente al cambiar tarifa o horas
+  const handleChangeTarifa = (value: string) => {
+    const newConfig = { ...config, tarifa_dia: value }
+    setConfig(newConfig)
+    handleSaveConfig(newConfig)
+  }
+
+  const handleChangeHoras = (value: string) => {
+    const newConfig = { ...config, horas_dia: value }
+    setConfig(newConfig)
+    handleSaveConfig(newConfig)
   }
 
   const TARIFA_DIA_OPTIONS = ['300', '400', '500', '600', '700', '800', '1000']
@@ -142,11 +166,14 @@ export default function Sidebar() {
           </nav>
 
           {/* Config */}
-          <ConfigPanel
+      <ConfigPanel
             config={config} setConfig={setConfig}
             tarifaHora={tarifaHora}
             showApiKey={showApiKey} setShowApiKey={setShowApiKey}
             handleSaveConfig={handleSaveConfig}
+            handleChangeTarifa={handleChangeTarifa}
+            handleChangeHoras={handleChangeHoras}
+            saving={saving} saved={saved}
             TARIFA_DIA_OPTIONS={TARIFA_DIA_OPTIONS}
             HORAS_DIA_OPTIONS={HORAS_DIA_OPTIONS}
           />
@@ -229,6 +256,9 @@ export default function Sidebar() {
         tarifaHora={tarifaHora}
         showApiKey={showApiKey} setShowApiKey={setShowApiKey}
         handleSaveConfig={handleSaveConfig}
+        handleChangeTarifa={handleChangeTarifa}
+        handleChangeHoras={handleChangeHoras}
+        saving={saving} saved={saved}
         TARIFA_DIA_OPTIONS={TARIFA_DIA_OPTIONS}
         HORAS_DIA_OPTIONS={HORAS_DIA_OPTIONS}
       />
@@ -240,6 +270,8 @@ export default function Sidebar() {
 function ConfigPanel({
   config, setConfig, tarifaHora,
   showApiKey, setShowApiKey, handleSaveConfig,
+  handleChangeTarifa, handleChangeHoras,
+  saving, saved,
   TARIFA_DIA_OPTIONS, HORAS_DIA_OPTIONS,
 }: {
   config: Config
@@ -248,6 +280,10 @@ function ConfigPanel({
   showApiKey: boolean
   setShowApiKey: (v: boolean) => void
   handleSaveConfig: () => void
+  handleChangeTarifa: (v: string) => void
+  handleChangeHoras: (v: string) => void
+  saving: boolean
+  saved: boolean
   TARIFA_DIA_OPTIONS: string[]
   HORAS_DIA_OPTIONS: string[]
 }) {
@@ -258,8 +294,7 @@ function ConfigPanel({
           <span style={{ color: '#6b7280' }}>$/día</span>
           <select
             value={config.tarifa_dia}
-            onChange={(e) => setConfig({ ...config, tarifa_dia: e.target.value })}
-            onBlur={handleSaveConfig}
+            onChange={(e) => handleChangeTarifa(e.target.value)}
             style={{ fontSize: '12px', padding: '2px 20px 2px 6px', width: 'auto' }}
           >
             {TARIFA_DIA_OPTIONS.map((v) => <option key={v} value={v}>${v}</option>)}
@@ -269,8 +304,7 @@ function ConfigPanel({
           <span style={{ color: '#6b7280' }}>hrs/día</span>
           <select
             value={config.horas_dia}
-            onChange={(e) => setConfig({ ...config, horas_dia: e.target.value })}
-            onBlur={handleSaveConfig}
+            onChange={(e) => handleChangeHoras(e.target.value)}
             style={{ fontSize: '12px', padding: '2px 20px 2px 6px', width: 'auto' }}
           >
             {HORAS_DIA_OPTIONS.map((v) => <option key={v} value={v}>{v} hrs</option>)}
@@ -278,12 +312,14 @@ function ConfigPanel({
         </div>
       </div>
 
+      {/* Tarifa calculada + feedback */}
       <div style={{
-        backgroundColor: '#7c3aed', borderRadius: '6px',
-        padding: '6px 10px', textAlign: 'center',
+        backgroundColor: saved ? '#10b981' : saving ? '#4b5563' : '#7c3aed',
+        borderRadius: '6px', padding: '6px 10px', textAlign: 'center',
         color: 'white', fontWeight: '600', marginBottom: '8px',
+        transition: 'background-color 0.3s', fontSize: '12px',
       }}>
-        ${tarifaHora.toFixed(2)} / hr
+        {saving ? 'Actualizando...' : saved ? '✓ Actualizado' : `$${tarifaHora.toFixed(2)} / hr`}
       </div>
 
       <div>

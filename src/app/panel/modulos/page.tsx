@@ -83,6 +83,8 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
     return 0
   })()
 
+  const estadoColor = ESTADO_COLORS[estado] || { bg: '#2a2a3a', text: '#9ca3af' }
+
   const dirty = estado !== modulo.estado || horasEstimadas !== String(modulo.horasEstimadas) ||
     horasReales !== String(modulo.horasReales ?? '') || descripcion !== (modulo.descripcion ?? '') ||
     tipoTarea !== modulo.tipoTarea || complejidad !== modulo.complejidad ||
@@ -123,178 +125,216 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
     } finally { setToggling(false) }
   }
 
-  const cols2 = isMobile ? '1fr 1fr' : '1fr 1fr 1fr'
-  const cols3 = isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr'
+  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+    <p style={{ fontSize: '10px', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600', marginBottom: '10px' }}>
+      {children}
+    </p>
+  )
 
   return (
     <div
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{
         position: 'fixed', inset: 0, zIndex: 300,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        display: 'flex', alignItems: isMobile ? 'flex-end' : 'center',
-        justifyContent: 'center', padding: isMobile ? '0' : '16px',
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        display: 'flex',
+        alignItems: isMobile ? 'flex-end' : 'center',
+        justifyContent: 'center',
+        padding: isMobile ? 0 : '20px',
       }}
     >
       <div style={{
-        backgroundColor: '#1a1a24',
-        border: '1px solid #2a2a3a',
-        borderRadius: isMobile ? '16px 16px 0 0' : '12px',
-        width: '100%',
-        maxWidth: isMobile ? '100%' : '780px',
-        maxHeight: isMobile ? '92vh' : '90vh',
-        overflowY: 'auto',
-        display: 'flex', flexDirection: 'column',
+        backgroundColor: '#16161f', border: '1px solid #252535',
+        borderRadius: isMobile ? '20px 20px 0 0' : '14px',
+        width: '100%', maxWidth: isMobile ? '100%' : '720px',
+        maxHeight: isMobile ? '94vh' : '88vh',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
       }}>
-        {/* Header del modal */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-          padding: '18px 20px', borderBottom: '1px solid #2a2a3a', flexShrink: 0,
-        }}>
-          <div style={{ flex: 1, minWidth: 0, marginRight: '12px' }}>
-            <h2 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: '700', color: '#e2e8f0', marginBottom: '3px' }}>
-              {modulo.nombre}
-            </h2>
-            <span style={{ fontSize: '12px', color: '#6b7280' }}>
-              {modulo.proyecto.nombre} · {modulo.colaborador.nombre}
-            </span>
+        {/* ── Header ── */}
+        <div style={{ padding: isMobile ? '20px 20px 16px' : '22px 28px 18px', borderBottom: '1px solid #1e1e2e', flexShrink: 0 }}>
+          {isMobile && <div style={{ width: '36px', height: '4px', borderRadius: '2px', backgroundColor: '#2a2a3a', margin: '0 auto 16px' }} />}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1, minWidth: 0, marginRight: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: isMobile ? '16px' : '17px', fontWeight: '700', color: '#f1f5f9', margin: 0 }}>{modulo.nombre}</h2>
+                <span style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '20px', backgroundColor: estadoColor.bg, color: estadoColor.text, fontWeight: '500', whiteSpace: 'nowrap' }}>
+                  {ESTADO_LABELS[modulo.estado] ?? modulo.estado}
+                </span>
+                {modulo.alertaHoras && <span style={{ fontSize: '11px', color: '#f59e0b' }}>⚠️ Alerta horas</span>}
+              </div>
+              <div style={{ display: 'flex', gap: '14px', fontSize: '12px', color: '#6b7280', flexWrap: 'wrap' }}>
+                <span>📁 {modulo.proyecto.nombre}</span>
+                <span>👤 {modulo.colaborador.nombre}</span>
+                <span>🕐 {modulo.horasEstimadas}h</span>
+                {modulo.montoTotal != null && <span style={{ color: modulo.pagado ? '#10b981' : '#f59e0b', fontWeight: '600' }}>${modulo.montoTotal.toFixed(0)}</span>}
+              </div>
+            </div>
+            <button onClick={onClose} style={{ background: '#1e1e2e', border: '1px solid #2a2a3a', color: '#6b7280', borderRadius: '8px', padding: '7px', display: 'flex', flexShrink: 0, cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
           </div>
-          <button onClick={onClose}
-            style={{ background: 'none', border: 'none', color: '#6b7280', padding: '4px', display: 'flex', flexShrink: 0 }}>
-            <X size={20} />
-          </button>
         </div>
 
-        {/* Contenido del modal */}
-        <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
+        {/* ── Cuerpo ── */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: isMobile ? '18px 20px' : '22px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-          {/* Fila 1: estado, horas est, horas real */}
-          <div style={{ display: 'grid', gridTemplateColumns: cols2, gap: '12px' }}>
-            <div>
-              <label style={labelSt}>Estado</label>
-              <select value={estado} onChange={e => setEstado(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
-                {Object.entries(ESTADO_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelSt}>Horas estimadas</label>
-              <input type="number" value={horasEstimadas} onChange={e => setHorasEstimadas(e.target.value)} min="0" step="0.5" style={{ fontSize: '13px' }} />
-            </div>
-            <div>
-              <label style={labelSt}>Horas reales</label>
-              <input type="number" value={horasReales} onChange={e => setHorasReales(e.target.value)} placeholder="Sin registrar" min="0" step="0.5" style={{ fontSize: '13px' }} />
-            </div>
-            <div>
-              <label style={labelSt}>Tipo de tarea</label>
-              <select value={tipoTarea} onChange={e => setTipoTarea(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
-                {TIPOS_TAREA.map(t => <option key={t} value={t}>{TIPO_TAREA_LABELS[t]}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelSt}>Complejidad</label>
-              <select value={complejidad} onChange={e => setComplejidad(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
-                {COMPLEJIDADES.map(c => <option key={c} value={c}>{COMPLEJIDAD_LABELS[c]}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Descripción */}
+          {/* Detalles */}
           <div>
-            <label style={labelSt}>Descripción</label>
-            <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} rows={3} style={{ fontSize: '13px', resize: 'vertical' }} />
+            <SectionTitle>Detalles del módulo</SectionTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '12px' }}>
+              <div><label style={labelSt}>Estado</label>
+                <select value={estado} onChange={e => setEstado(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
+                  {Object.entries(ESTADO_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+              <div><label style={labelSt}>Tipo de tarea</label>
+                <select value={tipoTarea} onChange={e => setTipoTarea(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
+                  {TIPOS_TAREA.map(t => <option key={t} value={t}>{TIPO_TAREA_LABELS[t]}</option>)}
+                </select>
+              </div>
+              <div><label style={labelSt}>Complejidad</label>
+                <select value={complejidad} onChange={e => setComplejidad(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
+                  {COMPLEJIDADES.map(c => <option key={c} value={c}>{COMPLEJIDAD_LABELS[c]}</option>)}
+                </select>
+              </div>
+              <div style={{ gridColumn: isMobile ? '1 / -1' : 'auto' }}>
+                <label style={labelSt}>Descripción</label>
+                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} rows={2} style={{ fontSize: '13px', resize: 'none', lineHeight: '1.5' }} />
+              </div>
+            </div>
           </div>
 
-          {/* Configuración de pago */}
-          <div style={{ backgroundColor: '#13131a', border: '1px solid #1e1e2e', borderRadius: '8px', padding: '14px' }}>
-            <p style={{ fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-              Configuración de pago
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: cols3, gap: '12px', alignItems: 'stretch' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={labelSt}>Modo</label>
+          <div style={{ height: '1px', backgroundColor: '#1e1e2e' }} />
+
+          {/* Horas */}
+          <div>
+            <SectionTitle>Registro de horas</SectionTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div><label style={labelSt}>Horas estimadas</label>
+                <input type="number" value={horasEstimadas} onChange={e => setHorasEstimadas(e.target.value)} min="0" step="0.5" style={{ fontSize: '13px' }} />
+              </div>
+              <div><label style={labelSt}>Horas reales trabajadas</label>
+                <input type="number" value={horasReales} onChange={e => setHorasReales(e.target.value)} placeholder="Sin registrar" min="0" step="0.5" style={{ fontSize: '13px' }} />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: '1px', backgroundColor: '#1e1e2e' }} />
+
+          {/* Pago */}
+          <div>
+            <SectionTitle>Configuración de pago</SectionTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
+              <div><label style={labelSt}>Modo de pago</label>
                 <select value={modoPago} onChange={e => {
                   setModoPago(e.target.value)
                   if (e.target.value === 'POR_HORA')   setTarifa('500')
                   if (e.target.value === 'POR_DIA')    setTarifa('4000')
                   if (e.target.value === 'MONTO_FIJO') setMontoFijo('')
-                }} style={{ width: '100%', fontSize: '13px', flex: 1 }}>
+                }} style={{ width: '100%', fontSize: '13px' }}>
                   <option value="POR_HORA">Por hora</option>
                   <option value="POR_DIA">Por día</option>
                   <option value="MONTO_FIJO">Monto fijo</option>
                 </select>
               </div>
-              {modoPago !== 'MONTO_FIJO' && (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={labelSt}>Base de cálculo</label>
-                  <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '13px', flex: 1 }}>
+              {modoPago !== 'MONTO_FIJO' ? (<>
+                <div><label style={labelSt}>{modoPago === 'POR_HORA' ? 'Tarifa/hora ($)' : 'Tarifa/día ($)'}</label>
+                  <input type="number" value={tarifa} onChange={e => setTarifa(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} />
+                </div>
+                <div><label style={labelSt}>Base de cálculo</label>
+                  <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '13px' }}>
                     <option value="ESTIMADAS">Estimadas ({horasEstimadas}h)</option>
                     <option value="REALES" disabled={!horasReales}>Reales {horasReales ? `(${horasReales}h)` : '(sin registrar)'}</option>
                   </select>
                 </div>
+              </>) : (
+                <div style={{ gridColumn: '1 / -1' }}><label style={labelSt}>Monto fijo ($)</label>
+                  <input type="number" value={montoFijo} onChange={e => setMontoFijo(e.target.value)} placeholder="Ej. 5000" min="0" style={{ fontSize: '13px', maxWidth: '200px' }} />
+                </div>
               )}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={labelSt}>{modoPago === 'MONTO_FIJO' ? 'Monto fijo ($)' : modoPago === 'POR_HORA' ? 'Tarifa/hora ($)' : 'Tarifa/día ($)'}</label>
-                {modoPago !== 'MONTO_FIJO'
-                  ? <input type="number" value={tarifa} onChange={e => setTarifa(e.target.value)} min="0" step="50" style={{ fontSize: '13px', flex: 1 }} />
-                  : <input type="number" value={montoFijo} onChange={e => setMontoFijo(e.target.value)} placeholder="Ej. 5000" min="0" style={{ fontSize: '13px', flex: 1 }} />
-                }
-              </div>
-              <div style={{ backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px', padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <p style={{ fontSize: '10px', color: '#6b7280', marginBottom: '3px', textAlign: 'center' }}>
-                  {modoPago === 'POR_HORA' ? `${horasActivas}h × $${tarifa}/hr` : modoPago === 'POR_DIA' ? `${Math.ceil(horasActivas / 8) || 1}d × $${tarifa}` : 'Fijo'}
-                </p>
-                <p style={{ fontSize: '20px', fontWeight: '700', color: '#a78bfa', margin: 0 }}>${montoPreview.toFixed(0)}</p>
-              </div>
             </div>
-          </div>
-
-          {/* Info lectura */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: '10px' }}>
-            <InfoField label="Colaborador" value={modulo.colaborador.nombre} />
-            <InfoField label="Proyecto"    value={modulo.proyecto.nombre} />
-            <InfoField label="Tarifa/hr"   value={`$${modulo.tarifaHora}/hr`} />
-            <InfoField label="Creado"      value={new Date(modulo.createdAt).toLocaleDateString('es-MX')} />
-            {modulo.fechaEntrega && <InfoField label="Entregado" value={new Date(modulo.fechaEntrega).toLocaleDateString('es-MX')} />}
-            {modulo.notasIA && <div style={{ gridColumn: '1 / -1' }}><InfoField label="Análisis IA" value={modulo.notasIA} /></div>}
-          </div>
-
-          {/* Toggle pago */}
-          {(modulo.montoTotal ?? 0) > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', backgroundColor: '#13131a', borderRadius: '8px' }}>
-              <div onClick={toggling ? undefined : handleTogglePago}
-                style={{ width: '40px', height: '22px', borderRadius: '11px', backgroundColor: modulo.pagado ? '#10b981' : '#2a2a3a', position: 'relative', cursor: toggling ? 'wait' : 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
-                <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '3px', left: modulo.pagado ? '21px' : '3px', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }} />
-              </div>
-              <div>
+            {/* Resumen de pago */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f0f16', border: '1px solid #252535', borderRadius: '10px', padding: '14px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div onClick={toggling ? undefined : handleTogglePago}
+                  style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: modulo.pagado ? '#10b981' : '#2a2a3a', position: 'relative', cursor: toggling ? 'wait' : 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '3px', left: modulo.pagado ? '23px' : '3px', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }} />
+                </div>
                 <span style={{ fontSize: '13px', color: modulo.pagado ? '#10b981' : '#9ca3af', fontWeight: '500' }}>
                   {modulo.pagado ? 'Pagado' : 'Sin pagar'}
                 </span>
-                <span style={{ fontSize: '11px', color: '#4b5563', marginLeft: '8px' }}>
-                  ${(modulo.montoTotal ?? 0).toFixed(0)}
-                </span>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '11px', color: '#4b5563', marginBottom: '2px' }}>
+                  {modoPago === 'POR_HORA' ? `${horasActivas}h × $${tarifa}/hr` : modoPago === 'POR_DIA' ? `${Math.ceil(horasActivas / 8) || 1}d × $${tarifa}` : 'Monto fijo'}
+                </p>
+                <p style={{ fontSize: '22px', fontWeight: '800', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Footer del modal */}
-        <div style={{ padding: '14px 20px', borderTop: '1px solid #2a2a3a', display: 'flex', justifyContent: 'flex-end', gap: '10px', flexShrink: 0 }}>
-          <button onClick={onClose}
-            style={{ backgroundColor: 'transparent', border: '1px solid #2a2a3a', color: '#9ca3af' }}>
-            Cancelar
-          </button>
-          <button onClick={handleSave} disabled={saving || !dirty}
-            style={{ backgroundColor: dirty ? '#7c3aed' : '#2a2a3a', color: dirty ? 'white' : '#4b5563', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-            <Save size={13} />
-            {saving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
+          <div style={{ height: '1px', backgroundColor: '#1e1e2e' }} />
+
+          {/* Info */}
+          <div>
+            <SectionTitle>Información</SectionTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: '10px' }}>
+              {[
+                { label: 'Colaborador', value: modulo.colaborador.nombre.split(' ')[0] },
+                { label: 'Proyecto',    value: modulo.proyecto.nombre },
+                { label: 'Tarifa/hr',   value: `$${modulo.tarifaHora.toFixed(0)}/hr` },
+                { label: 'Creado',      value: new Date(modulo.createdAt).toLocaleDateString('es-MX') },
+                ...(modulo.fechaEntrega ? [{ label: 'Entregado', value: new Date(modulo.fechaEntrega).toLocaleDateString('es-MX') }] : []),
+              ].map(f => (
+                <div key={f.label} style={{ backgroundColor: '#0f0f16', borderRadius: '8px', padding: '10px 12px' }}>
+                  <p style={labelSt}>{f.label}</p>
+                  <p style={{ fontSize: '13px', color: '#cbd5e1', fontWeight: '500', margin: 0 }}>{f.value}</p>
+                </div>
+              ))}
+              {modulo.notasIA && (
+                <div style={{ gridColumn: '1 / -1', backgroundColor: '#7c3aed10', border: '1px solid #7c3aed20', borderRadius: '8px', padding: '10px 12px' }}>
+                  <p style={labelSt}>✨ Análisis IA</p>
+                  <p style={{ fontSize: '12px', color: '#c4b5fd', lineHeight: '1.5', margin: 0 }}>{modulo.notasIA}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* ── Footer ── */}
+        <div style={{
+          padding: isMobile ? '14px 20px calc(14px + env(safe-area-inset-bottom,0px))' : '16px 28px',
+          borderTop: '1px solid #1e1e2e',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          flexShrink: 0, backgroundColor: '#13131a',
+        }}>
+          <span style={{ fontSize: '12px', color: dirty ? '#f59e0b' : '#4b5563' }}>
+            {dirty ? '● Cambios sin guardar' : 'Sin cambios'}
+          </span>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={onClose} style={{ backgroundColor: 'transparent', border: '1px solid #2a2a3a', color: '#9ca3af', padding: '8px 16px', borderRadius: '8px', fontSize: '13px' }}>
+              Cancelar
+            </button>
+            <button onClick={handleSave} disabled={saving || !dirty}
+              style={{
+                backgroundColor: dirty ? '#7c3aed' : '#1e1e2e',
+                color: dirty ? 'white' : '#4b5563',
+                border: 'none', padding: '8px 20px', borderRadius: '8px',
+                display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '13px', fontWeight: '500',
+                cursor: dirty && !saving ? 'pointer' : 'not-allowed',
+              }}>
+              <Save size={13} />
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-// ─── Fila de módulo (sin expansión, solo muestra datos + botón editar) ────────
+// ─── Fila de módulo ──────────────────────────────────────────────────────────
 function ModuloRow({ modulo, onEdit, onDelete, isMobile }: {
   modulo: Modulo
   onEdit: (m: Modulo) => void

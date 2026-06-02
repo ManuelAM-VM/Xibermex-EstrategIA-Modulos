@@ -61,6 +61,13 @@ export async function PATCH(
     const montoPagado = actual.montoPagado
     const pagado = montoTotal != null && montoPagado >= montoTotal && montoTotal > 0
 
+    // Si transiciona a ENTREGADO y no tiene fechaEntrega, registrarla ahora
+    const fechaEntrega = bodyLimpio.estado === 'ENTREGADO' && !actual.fechaEntrega
+      ? new Date()
+      : bodyLimpio.fechaEntrega !== undefined
+      ? bodyLimpio.fechaEntrega
+      : actual.fechaEntrega
+
     const modulo = await prisma.modulo.update({
       where: { id },
       data: {
@@ -70,6 +77,7 @@ export async function PATCH(
         montoFijo: modoPago === 'MONTO_FIJO' ? (montoFijo ?? null) : null,
         montoTotal,
         pagado,
+        fechaEntrega,
       },
       include: { colaborador: true, proyecto: true, pagos: true },
     })

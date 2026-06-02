@@ -203,8 +203,10 @@ export async function POST(request: Request) {
 
       const { alerta } = detectarAlertaHoras(horasEstimadas, complejidad)
       const montoTotal  = horasEstimadas > 0 ? horasEstimadas * tarifaHora : costoRaw
-      const pagado      = estado === 'APROBADO'
-      const montoPagado = pagado ? montoTotal : 0
+      // Un módulo aprobado/listo NO se considera pagado automáticamente
+      // el pago se registra explícitamente desde la UI
+      const pagado      = false
+      const montoPagado = 0
 
       try {
         await prisma.modulo.create({
@@ -221,7 +223,8 @@ export async function POST(request: Request) {
             alertaHoras: alerta,
             pagado,
             montoPagado,
-            fechaEntrega: pagado ? new Date() : null,
+            // fechaEntrega solo para módulos que ya fueron entregados/aprobados
+            fechaEntrega: ['ENTREGADO', 'APROBADO'].includes(estado) ? new Date() : null,
             colaboradorId,
             proyectoId,
           },

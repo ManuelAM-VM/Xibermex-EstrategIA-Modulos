@@ -4,77 +4,89 @@ import { detectarAlertaHoras } from '@/lib/utils'
 
 export const runtime = 'nodejs'
 
-// Datos de ejemplo para importar (los 22 módulos originales)
+// Tipos válidos: DESARROLLO, ACTUALIZACION, CONFIGURACION, OPTIMIZACION
 const MODULOS_INICIALES = [
-  { nombre: 'Login con roles', tipo: 'DESARROLLO', complejidad: 'MEDIA', horas: 8, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Dashboard principal', tipo: 'DESARROLLO', complejidad: 'ALTA', horas: 16, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Gestión de usuarios', tipo: 'DESARROLLO', complejidad: 'MEDIA', horas: 10, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'API REST módulos', tipo: 'DESARROLLO', complejidad: 'ALTA', horas: 20, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Diseño UI/UX base', tipo: 'DISEÑO', complejidad: 'MEDIA', horas: 12, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'Integración Supabase', tipo: 'DEVOPS', complejidad: 'MEDIA', horas: 6, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Sistema de pagos', tipo: 'DESARROLLO', complejidad: 'ALTA', horas: 18, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Reportes PDF', tipo: 'DESARROLLO', complejidad: 'MEDIA', horas: 8, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'Notificaciones email', tipo: 'DESARROLLO', complejidad: 'BAJA', horas: 4, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'Análisis IA horas', tipo: 'DESARROLLO', complejidad: 'ALTA', horas: 14, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Importar CSV', tipo: 'DESARROLLO', complejidad: 'BAJA', horas: 3, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Filtros avanzados', tipo: 'DESARROLLO', complejidad: 'MEDIA', horas: 6, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'Autenticación JWT', tipo: 'DESARROLLO', complejidad: 'MEDIA', horas: 8, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Testing unitario', tipo: 'QA', complejidad: 'MEDIA', horas: 10, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'Deploy producción', tipo: 'DEVOPS', complejidad: 'ALTA', horas: 8, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Documentación API', tipo: 'DOCUMENTACION', complejidad: 'BAJA', horas: 4, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'Optimización DB', tipo: 'DEVOPS', complejidad: 'ALTA', horas: 12, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Mobile responsive', tipo: 'DISEÑO', complejidad: 'MEDIA', horas: 8, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'Cache Redis', tipo: 'DEVOPS', complejidad: 'ALTA', horas: 10, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Logs y monitoreo', tipo: 'DEVOPS', complejidad: 'MEDIA', horas: 6, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
-  { nombre: 'Reunión kickoff', tipo: 'REUNION', complejidad: 'BAJA', horas: 2, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA' },
-  { nombre: 'Revisión final', tipo: 'QA', complejidad: 'MEDIA', horas: 6, colaborador: 'Oscar M. Navarro', proyecto: 'EstrategIA' },
+  { nombre: 'Login con roles',         tipo: 'DESARROLLO',    complejidad: 'MEDIA', horas: 5,  colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Dashboard principal',     tipo: 'DESARROLLO',    complejidad: 'ALTA',  horas: 16, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Gestión de usuarios',     tipo: 'DESARROLLO',    complejidad: 'MEDIA', horas: 10, colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'API REST módulos',        tipo: 'DESARROLLO',    complejidad: 'ALTA',  horas: 20, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Diseño UI/UX base',       tipo: 'ACTUALIZACION', complejidad: 'MEDIA', horas: 12, colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Integración PostgreSQL',  tipo: 'CONFIGURACION', complejidad: 'MEDIA', horas: 6,  colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Sistema de pagos',        tipo: 'DESARROLLO',    complejidad: 'ALTA',  horas: 18, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'EN_CURSO' },
+  { nombre: 'Reportes PDF',            tipo: 'DESARROLLO',    complejidad: 'MEDIA', horas: 8,  colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'ENTREGADO' },
+  { nombre: 'Notificaciones email',    tipo: 'DESARROLLO',    complejidad: 'BAJA',  horas: 4,  colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'PENDIENTE' },
+  { nombre: 'Análisis IA horas',       tipo: 'DESARROLLO',    complejidad: 'ALTA',  horas: 14, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Importar Excel',          tipo: 'DESARROLLO',    complejidad: 'BAJA',  horas: 3,  colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Filtros avanzados',       tipo: 'DESARROLLO',    complejidad: 'MEDIA', horas: 6,  colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'PENDIENTE' },
+  { nombre: 'Autenticación JWT',       tipo: 'DESARROLLO',    complejidad: 'MEDIA', horas: 8,  colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Optimización de queries', tipo: 'OPTIMIZACION',  complejidad: 'MEDIA', horas: 10, colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Deploy producción',       tipo: 'CONFIGURACION', complejidad: 'ALTA',  horas: 8,  colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Actualización de deps',   tipo: 'ACTUALIZACION', complejidad: 'BAJA',  horas: 4,  colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Caché y rendimiento',     tipo: 'OPTIMIZACION',  complejidad: 'ALTA',  horas: 12, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'EN_CURSO' },
+  { nombre: 'UI responsive móvil',     tipo: 'ACTUALIZACION', complejidad: 'MEDIA', horas: 8,  colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Configuración Docker',    tipo: 'CONFIGURACION', complejidad: 'ALTA',  horas: 10, colaborador: 'Victor Manuel Arredondo', proyecto: 'EstrategIA', estado: 'APROBADO' },
+  { nombre: 'Logs y monitoreo',        tipo: 'CONFIGURACION', complejidad: 'MEDIA', horas: 6,  colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'PENDIENTE' },
+  { nombre: 'Setup MarIA backend',     tipo: 'CONFIGURACION', complejidad: 'ALTA',  horas: 15, colaborador: 'Oscar M. Navarro',        proyecto: 'MarIA',      estado: 'EN_CURSO' },
+  { nombre: 'Revisión final',          tipo: 'OPTIMIZACION',  complejidad: 'MEDIA', horas: 6,  colaborador: 'Oscar M. Navarro',        proyecto: 'EstrategIA', estado: 'PENDIENTE' },
 ]
 
 export async function POST() {
   try {
-    // Obtener colaboradores y proyectos existentes
     const colaboradores = await prisma.colaborador.findMany()
-    const proyectos = await prisma.proyecto.findMany()
+    const proyectos     = await prisma.proyecto.findMany()
 
-    const colMap = new Map(colaboradores.map((c) => [c.nombre, c.id]))
-    const proyMap = new Map(proyectos.map((p) => [p.nombre, p.id]))
+    const colMap  = new Map(colaboradores.map(c => [c.nombre, c.id]))
+    const proyMap = new Map(proyectos.map(p => [p.nombre, p.id]))
 
-    const TARIFA_HORA = 125
+    // Usar tarifa configurada
+    const cfgTarifa  = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
+    const cfgHoras   = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
+    const tarifaDia  = parseFloat(cfgTarifa?.valor || '500')
+    const horasDia   = parseFloat(cfgHoras?.valor  || '4')
+    const tarifaHora = tarifaDia / horasDia
 
-    const creados = []
+    const creados: string[] = []
+    const omitidos: string[] = []
+
     for (const m of MODULOS_INICIALES) {
       const colaboradorId = colMap.get(m.colaborador)
-      const proyectoId = proyMap.get(m.proyecto)
+      const proyectoId    = proyMap.get(m.proyecto)
 
       if (!colaboradorId || !proyectoId) {
-        console.warn(`Saltando módulo ${m.nombre}: colaborador o proyecto no encontrado`)
+        omitidos.push(`${m.nombre} (colaborador/proyecto no encontrado)`)
         continue
       }
 
       const { alerta } = detectarAlertaHoras(m.horas, m.complejidad)
+      const montoTotal  = m.horas * tarifaHora
 
-      const modulo = await prisma.modulo.create({
+      await prisma.modulo.create({
         data: {
-          nombre: m.nombre,
-          tipoTarea: m.tipo as never,
-          complejidad: m.complejidad as never,
+          nombre:         m.nombre,
+          tipoTarea:      m.tipo,
+          complejidad:    m.complejidad,
           horasEstimadas: m.horas,
-          tarifaHora: TARIFA_HORA,
-          montoTotal: m.horas * TARIFA_HORA,
-          alertaHoras: alerta,
+          tarifaHora,
+          montoTotal,
+          alertaHoras:    alerta,
           colaboradorId,
           proyectoId,
-          estado: 'APROBADO',
-          fechaEntrega: new Date(),
+          estado:         m.estado,
+          // fechaEntrega solo para módulos ya terminados
+          fechaEntrega:   ['ENTREGADO', 'APROBADO'].includes(m.estado) ? new Date() : null,
+          // NO marcar como pagado — los pagos se registran explícitamente
+          pagado:      false,
+          montoPagado: 0,
         },
       })
-      creados.push(modulo)
+      creados.push(m.nombre)
     }
 
     return NextResponse.json({
       success: true,
       importados: creados.length,
-      mensaje: `Se importaron ${creados.length} módulos correctamente`,
+      omitidos:   omitidos.length,
+      mensaje:    `Se importaron ${creados.length} módulos correctamente`,
     })
   } catch (error) {
     console.error('Error importing data:', error)

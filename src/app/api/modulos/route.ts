@@ -6,23 +6,19 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const colaboradorId = searchParams.get('colaboradorId')
-    const proyectoId = searchParams.get('proyectoId')
-    const estado = searchParams.get('estado')
-    const complejidad = searchParams.get('complejidad')
+    const proyectoId    = searchParams.get('proyectoId')
+    const estado        = searchParams.get('estado')
+    const complejidad   = searchParams.get('complejidad')
 
     const where: Record<string, unknown> = {}
     if (colaboradorId) where.colaboradorId = colaboradorId
-    if (proyectoId) where.proyectoId = proyectoId
-    if (estado) where.estado = estado
-    if (complejidad) where.complejidad = complejidad
+    if (proyectoId)    where.proyectoId    = proyectoId
+    if (estado)        where.estado        = estado
+    if (complejidad)   where.complejidad   = complejidad
 
     const modulos = await prisma.modulo.findMany({
       where,
-      include: {
-        colaborador: true,
-        proyecto: true,
-        pagos: true,
-      },
+      include: { colaborador: true, proyecto: true, pagos: true },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(modulos)
@@ -35,16 +31,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const {
-      nombre,
-      descripcion,
-      tipoTarea,
-      complejidad,
-      horasEstimadas,
-      colaboradorId,
-      proyectoId,
-      tarifaHora,
-    } = body
+    const { nombre, descripcion, tipoTarea, complejidad, horasEstimadas, colaboradorId, proyectoId, tarifaHora } = body
 
     if (!nombre || !colaboradorId || !proyectoId || !horasEstimadas) {
       return NextResponse.json(
@@ -53,28 +40,35 @@ export async function POST(request: Request) {
       )
     }
 
-    const tarifa = tarifaHora || 125
-    const monto = parseFloat(horasEstimadas) * tarifa
-    const { alerta } = detectarAlertaHoras(parseFloat(horasEstimadas), complejidad || 'MEDIA')
+    // Si el cliente no envía la tarifa, leerla desde configuración
+    let tarifa = tarifaHora
+    if (!tarifa) {
+      const cfgTarifa = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
+      const cfgHoras  = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
+      const tarifaDia = parseFloat(cfgTarifa?.valor || '500')
+      const horasDia  = parseFloat(cfgHoras?.valor  || '4')
+      tarifa = horasDia > 0 ? tarifaDia / horasDia : 125
+    }
+
+    const horas = parseFloat(horasEstimadas)
+    const monto = horas * tarifa
+    const { alerta } = detectarAlertaHoras(horas, complejidad || 'MEDIA')
 
     const modulo = await prisma.modulo.create({
       data: {
         nombre,
-        descripcion,
-        tipoTarea: tipoTarea || 'DESARROLLO',
-        complejidad: complejidad || 'MEDIA',
-        horasEstimadas: parseFloat(horasEstimadas),
-        tarifaHora: tarifa,
-        montoTotal: monto,
-        alertaHoras: alerta,
+        descripcion: descripcion || null,
+        tipoTarea:      tipoTarea   || 'DESARROLLO',
+        complejidad:    complejidad || 'MEDIA',
+        horasEstimadas: horas,
+        tarifaHora:     tarifa,
+        montoTotal:     monto,
+        alertaHoras:    alerta,
         colaboradorId,
         proyectoId,
         estado: 'PENDIENTE',
       },
-      include: {
-        colaborador: true,
-        proyecto: true,
-      },
+      include: { colaborador: true, proyecto: true },
     })
     return NextResponse.json(modulo, { status: 201 })
   } catch (error) {

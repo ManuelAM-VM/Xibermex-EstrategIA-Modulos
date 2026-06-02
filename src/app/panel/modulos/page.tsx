@@ -164,9 +164,9 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                 {modulo.alertaHoras && <span style={{ fontSize: '11px', color: '#f59e0b' }}>⚠️ Alerta horas</span>}
               </div>
               <div style={{ display: 'flex', gap: '14px', fontSize: '12px', color: '#6b7280', flexWrap: 'wrap' }}>
-                <span>📁 {modulo.proyecto.nombre}</span>
-                <span>👤 {modulo.colaborador.nombre}</span>
-                <span>🕐 {modulo.horasEstimadas}h</span>
+                <span>{modulo.proyecto.nombre}</span>
+                <span>{modulo.colaborador.nombre}</span>
+                <span>{modulo.horasEstimadas}h</span>
                 {modulo.montoTotal != null && <span style={{ color: modulo.pagado ? '#10b981' : '#f59e0b', fontWeight: '600' }}>${modulo.montoTotal.toFixed(0)}</span>}
               </div>
             </div>

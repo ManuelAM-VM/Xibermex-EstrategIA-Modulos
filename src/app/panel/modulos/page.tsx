@@ -182,7 +182,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
           {/* Detalles */}
           <div>
             <SectionTitle>Detalles del módulo</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
               <div><label style={labelSt}>Estado</label>
                 <select value={estado} onChange={e => setEstado(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
                   {Object.entries(ESTADO_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -198,10 +198,27 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                   {COMPLEJIDADES.map(c => <option key={c} value={c}>{COMPLEJIDAD_LABELS[c]}</option>)}
                 </select>
               </div>
-              <div style={{ gridColumn: isMobile ? '1 / -1' : 'auto' }}>
-                <label style={labelSt}>Descripción</label>
-                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} rows={2} style={{ fontSize: '13px', resize: 'none', lineHeight: '1.5' }} />
-              </div>
+            </div>
+            <div>
+              <label style={labelSt}>Descripción</label>
+              <textarea
+                value={descripcion}
+                onChange={e => setDescripcion(e.target.value)}
+                rows={isMobile ? 4 : 5}
+                placeholder="Describe qué incluye este módulo..."
+                style={{
+                  fontSize: '13px',
+                  resize: 'vertical',
+                  lineHeight: '1.6',
+                  color: '#e2e8f0',
+                  backgroundColor: '#0f0f16',
+                  border: '1px solid #2a2a3a',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  width: '100%',
+                  minHeight: isMobile ? '90px' : '110px',
+                }}
+              />
             </div>
           </div>
 

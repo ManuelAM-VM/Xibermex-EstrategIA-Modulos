@@ -177,48 +177,69 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
         </div>
 
         {/* ── Cuerpo ── */}
-        <div style={{ overflowY: 'auto', flex: 1, padding: isMobile ? '18px 20px' : '22px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ overflowY: 'auto', flex: 1, padding: isMobile ? '14px 16px' : '22px 28px', display: 'flex', flexDirection: 'column', gap: isMobile ? '14px' : '20px' }}>
 
           {/* Detalles */}
           <div>
-            <SectionTitle>Detalles del módulo</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
-              <div><label style={labelSt}>Estado</label>
-                <select value={estado} onChange={e => setEstado(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
-                  {Object.entries(ESTADO_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
+            <SectionTitle>Detalles</SectionTitle>
+            {/* En móvil: columna única para todos los selects */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {isMobile ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div><label style={labelSt}>Estado</label>
+                      <select value={estado} onChange={e => setEstado(e.target.value)} style={{ width: '100%', fontSize: '14px' }}>
+                        {Object.entries(ESTADO_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </select>
+                    </div>
+                    <div><label style={labelSt}>Complejidad</label>
+                      <select value={complejidad} onChange={e => setComplejidad(e.target.value)} style={{ width: '100%', fontSize: '14px' }}>
+                        {COMPLEJIDADES.map(c => <option key={c} value={c}>{COMPLEJIDAD_LABELS[c]}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div><label style={labelSt}>Tipo de tarea</label>
+                    <select value={tipoTarea} onChange={e => setTipoTarea(e.target.value)} style={{ width: '100%', fontSize: '14px' }}>
+                      {TIPOS_TAREA.map(t => <option key={t} value={t}>{TIPO_TAREA_LABELS[t]}</option>)}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                  <div><label style={labelSt}>Estado</label>
+                    <select value={estado} onChange={e => setEstado(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
+                      {Object.entries(ESTADO_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div><label style={labelSt}>Tipo de tarea</label>
+                    <select value={tipoTarea} onChange={e => setTipoTarea(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
+                      {TIPOS_TAREA.map(t => <option key={t} value={t}>{TIPO_TAREA_LABELS[t]}</option>)}
+                    </select>
+                  </div>
+                  <div><label style={labelSt}>Complejidad</label>
+                    <select value={complejidad} onChange={e => setComplejidad(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
+                      {COMPLEJIDADES.map(c => <option key={c} value={c}>{COMPLEJIDAD_LABELS[c]}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+              <div>
+                <label style={labelSt}>Descripción</label>
+                <textarea
+                  value={descripcion}
+                  onChange={e => setDescripcion(e.target.value)}
+                  rows={isMobile ? 3 : 5}
+                  placeholder="Describe qué incluye este módulo..."
+                  style={{
+                    fontSize: isMobile ? '14px' : '13px',
+                    resize: 'vertical', lineHeight: '1.6',
+                    color: '#e2e8f0', backgroundColor: '#0f0f16',
+                    border: '1px solid #2a2a3a', borderRadius: '8px',
+                    padding: '10px 12px', width: '100%',
+                    minHeight: isMobile ? '80px' : '110px',
+                  }}
+                />
               </div>
-              <div><label style={labelSt}>Tipo de tarea</label>
-                <select value={tipoTarea} onChange={e => setTipoTarea(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
-                  {TIPOS_TAREA.map(t => <option key={t} value={t}>{TIPO_TAREA_LABELS[t]}</option>)}
-                </select>
-              </div>
-              <div><label style={labelSt}>Complejidad</label>
-                <select value={complejidad} onChange={e => setComplejidad(e.target.value)} style={{ width: '100%', fontSize: '13px' }}>
-                  {COMPLEJIDADES.map(c => <option key={c} value={c}>{COMPLEJIDAD_LABELS[c]}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label style={labelSt}>Descripción</label>
-              <textarea
-                value={descripcion}
-                onChange={e => setDescripcion(e.target.value)}
-                rows={isMobile ? 4 : 5}
-                placeholder="Describe qué incluye este módulo..."
-                style={{
-                  fontSize: '13px',
-                  resize: 'vertical',
-                  lineHeight: '1.6',
-                  color: '#e2e8f0',
-                  backgroundColor: '#0f0f16',
-                  border: '1px solid #2a2a3a',
-                  borderRadius: '8px',
-                  padding: '10px 12px',
-                  width: '100%',
-                  minHeight: isMobile ? '90px' : '110px',
-                }}
-              />
             </div>
           </div>
 
@@ -226,13 +247,13 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
 
           {/* Horas */}
           <div>
-            <SectionTitle>Registro de horas</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div><label style={labelSt}>Horas estimadas</label>
-                <input type="number" value={horasEstimadas} onChange={e => setHorasEstimadas(e.target.value)} min="0" step="0.5" style={{ fontSize: '13px' }} />
+            <SectionTitle>Horas</SectionTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div><label style={labelSt}>Estimadas</label>
+                <input type="number" value={horasEstimadas} onChange={e => setHorasEstimadas(e.target.value)} min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
               </div>
-              <div><label style={labelSt}>Horas reales trabajadas</label>
-                <input type="number" value={horasReales} onChange={e => setHorasReales(e.target.value)} placeholder="Sin registrar" min="0" step="0.5" style={{ fontSize: '13px' }} />
+              <div><label style={labelSt}>Reales trabajadas</label>
+                <input type="number" value={horasReales} onChange={e => setHorasReales(e.target.value)} placeholder="—" min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
               </div>
             </div>
           </div>
@@ -241,54 +262,106 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
 
           {/* Pago */}
           <div>
-            <SectionTitle>Configuración de pago</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
-              <div><label style={labelSt}>Modo de pago</label>
-                <select value={modoPago} onChange={e => {
-                  setModoPago(e.target.value)
-                  if (e.target.value === 'POR_HORA')   setTarifa('500')
-                  if (e.target.value === 'POR_DIA')    setTarifa('4000')
-                  if (e.target.value === 'MONTO_FIJO') setMontoFijo('')
-                }} style={{ width: '100%', fontSize: '13px' }}>
-                  <option value="POR_HORA">Por hora</option>
-                  <option value="POR_DIA">Por día</option>
-                  <option value="MONTO_FIJO">Monto fijo</option>
-                </select>
+            <SectionTitle>Pago</SectionTitle>
+            {isMobile ? (
+              /* Móvil: layout vertical compacto */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div><label style={labelSt}>Modo</label>
+                    <select value={modoPago} onChange={e => {
+                      setModoPago(e.target.value)
+                      if (e.target.value === 'POR_HORA')   setTarifa('500')
+                      if (e.target.value === 'POR_DIA')    setTarifa('4000')
+                      if (e.target.value === 'MONTO_FIJO') setMontoFijo('')
+                    }} style={{ width: '100%', fontSize: '14px' }}>
+                      <option value="POR_HORA">Por hora</option>
+                      <option value="POR_DIA">Por día</option>
+                      <option value="MONTO_FIJO">Monto fijo</option>
+                    </select>
+                  </div>
+                  {modoPago !== 'MONTO_FIJO' ? (
+                    <div><label style={labelSt}>{modoPago === 'POR_HORA' ? 'Tarifa/hora ($)' : 'Tarifa/día ($)'}</label>
+                      <input type="number" value={tarifa} onChange={e => setTarifa(e.target.value)} min="0" step="50" style={{ fontSize: '14px' }} />
+                    </div>
+                  ) : (
+                    <div><label style={labelSt}>Monto fijo ($)</label>
+                      <input type="number" value={montoFijo} onChange={e => setMontoFijo(e.target.value)} placeholder="Ej. 5000" min="0" style={{ fontSize: '14px' }} />
+                    </div>
+                  )}
+                </div>
+                {modoPago !== 'MONTO_FIJO' && (
+                  <div><label style={labelSt}>Base de cálculo</label>
+                    <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '14px' }}>
+                      <option value="ESTIMADAS">Estimadas ({horasEstimadas}h)</option>
+                      <option value="REALES" disabled={!horasReales}>Reales {horasReales ? `(${horasReales}h)` : '(sin registrar)'}</option>
+                    </select>
+                  </div>
+                )}
+                {/* Resumen compacto móvil */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f0f16', border: '1px solid #252535', borderRadius: '10px', padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div onClick={toggling ? undefined : handleTogglePago}
+                      style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: modulo.pagado ? '#10b981' : '#2a2a3a', position: 'relative', cursor: toggling ? 'wait' : 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                      <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '3px', left: modulo.pagado ? '23px' : '3px', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }} />
+                    </div>
+                    <span style={{ fontSize: '14px', color: modulo.pagado ? '#10b981' : '#9ca3af', fontWeight: '500' }}>
+                      {modulo.pagado ? 'Pagado' : 'Sin pagar'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '24px', fontWeight: '800', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
+                </div>
               </div>
-              {modoPago !== 'MONTO_FIJO' ? (<>
-                <div><label style={labelSt}>{modoPago === 'POR_HORA' ? 'Tarifa/hora ($)' : 'Tarifa/día ($)'}</label>
-                  <input type="number" value={tarifa} onChange={e => setTarifa(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} />
+            ) : (
+              /* Desktop: igual que antes */
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
+                  <div><label style={labelSt}>Modo de pago</label>
+                    <select value={modoPago} onChange={e => {
+                      setModoPago(e.target.value)
+                      if (e.target.value === 'POR_HORA')   setTarifa('500')
+                      if (e.target.value === 'POR_DIA')    setTarifa('4000')
+                      if (e.target.value === 'MONTO_FIJO') setMontoFijo('')
+                    }} style={{ width: '100%', fontSize: '13px' }}>
+                      <option value="POR_HORA">Por hora</option>
+                      <option value="POR_DIA">Por día</option>
+                      <option value="MONTO_FIJO">Monto fijo</option>
+                    </select>
+                  </div>
+                  {modoPago !== 'MONTO_FIJO' ? (<>
+                    <div><label style={labelSt}>{modoPago === 'POR_HORA' ? 'Tarifa/hora ($)' : 'Tarifa/día ($)'}</label>
+                      <input type="number" value={tarifa} onChange={e => setTarifa(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} />
+                    </div>
+                    <div><label style={labelSt}>Base de cálculo</label>
+                      <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '13px' }}>
+                        <option value="ESTIMADAS">Estimadas ({horasEstimadas}h)</option>
+                        <option value="REALES" disabled={!horasReales}>Reales {horasReales ? `(${horasReales}h)` : '(sin registrar)'}</option>
+                      </select>
+                    </div>
+                  </>) : (
+                    <div style={{ gridColumn: '1 / -1' }}><label style={labelSt}>Monto fijo ($)</label>
+                      <input type="number" value={montoFijo} onChange={e => setMontoFijo(e.target.value)} placeholder="Ej. 5000" min="0" style={{ fontSize: '13px', maxWidth: '200px' }} />
+                    </div>
+                  )}
                 </div>
-                <div><label style={labelSt}>Base de cálculo</label>
-                  <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '13px' }}>
-                    <option value="ESTIMADAS">Estimadas ({horasEstimadas}h)</option>
-                    <option value="REALES" disabled={!horasReales}>Reales {horasReales ? `(${horasReales}h)` : '(sin registrar)'}</option>
-                  </select>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f0f16', border: '1px solid #252535', borderRadius: '10px', padding: '14px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div onClick={toggling ? undefined : handleTogglePago}
+                      style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: modulo.pagado ? '#10b981' : '#2a2a3a', position: 'relative', cursor: toggling ? 'wait' : 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                      <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '3px', left: modulo.pagado ? '23px' : '3px', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }} />
+                    </div>
+                    <span style={{ fontSize: '13px', color: modulo.pagado ? '#10b981' : '#9ca3af', fontWeight: '500' }}>
+                      {modulo.pagado ? 'Pagado' : 'Sin pagar'}
+                    </span>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '11px', color: '#4b5563', marginBottom: '2px' }}>
+                      {modoPago === 'POR_HORA' ? `${horasActivas}h × $${tarifa}/hr` : modoPago === 'POR_DIA' ? `${Math.ceil(horasActivas / 8) || 1}d × $${tarifa}` : 'Monto fijo'}
+                    </p>
+                    <p style={{ fontSize: '22px', fontWeight: '800', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
+                  </div>
                 </div>
-              </>) : (
-                <div style={{ gridColumn: '1 / -1' }}><label style={labelSt}>Monto fijo ($)</label>
-                  <input type="number" value={montoFijo} onChange={e => setMontoFijo(e.target.value)} placeholder="Ej. 5000" min="0" style={{ fontSize: '13px', maxWidth: '200px' }} />
-                </div>
-              )}
-            </div>
-            {/* Resumen de pago */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f0f16', border: '1px solid #252535', borderRadius: '10px', padding: '14px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div onClick={toggling ? undefined : handleTogglePago}
-                  style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: modulo.pagado ? '#10b981' : '#2a2a3a', position: 'relative', cursor: toggling ? 'wait' : 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
-                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '3px', left: modulo.pagado ? '23px' : '3px', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }} />
-                </div>
-                <span style={{ fontSize: '13px', color: modulo.pagado ? '#10b981' : '#9ca3af', fontWeight: '500' }}>
-                  {modulo.pagado ? 'Pagado' : 'Sin pagar'}
-                </span>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '11px', color: '#4b5563', marginBottom: '2px' }}>
-                  {modoPago === 'POR_HORA' ? `${horasActivas}h × $${tarifa}/hr` : modoPago === 'POR_DIA' ? `${Math.ceil(horasActivas / 8) || 1}d × $${tarifa}` : 'Monto fijo'}
-                </p>
-                <p style={{ fontSize: '22px', fontWeight: '800', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
-              </div>
-            </div>
+              </>
+            )}
           </div>
 
           <div style={{ height: '1px', backgroundColor: '#1e1e2e' }} />
@@ -296,7 +369,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
           {/* Info */}
           <div>
             <SectionTitle>Información</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: isMobile ? '8px' : '10px' }}>
               {[
                 { label: 'Colaborador', value: modulo.colaborador.nombre.split(' ')[0] },
                 { label: 'Proyecto',    value: modulo.proyecto.nombre },
@@ -304,13 +377,13 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                 { label: 'Creado',      value: new Date(modulo.createdAt).toLocaleDateString('es-MX') },
                 ...(modulo.fechaEntrega ? [{ label: 'Entregado', value: new Date(modulo.fechaEntrega).toLocaleDateString('es-MX') }] : []),
               ].map(f => (
-                <div key={f.label} style={{ backgroundColor: '#0f0f16', borderRadius: '8px', padding: '10px 12px' }}>
+                <div key={f.label} style={{ backgroundColor: '#0f0f16', borderRadius: '8px', padding: isMobile ? '8px 10px' : '10px 12px' }}>
                   <p style={labelSt}>{f.label}</p>
-                  <p style={{ fontSize: '13px', color: '#cbd5e1', fontWeight: '500', margin: 0 }}>{f.value}</p>
+                  <p style={{ fontSize: isMobile ? '13px' : '13px', color: '#cbd5e1', fontWeight: '500', margin: 0 }}>{f.value}</p>
                 </div>
               ))}
               {modulo.notasIA && (
-                <div style={{ gridColumn: '1 / -1', backgroundColor: '#7c3aed10', border: '1px solid #7c3aed20', borderRadius: '8px', padding: '10px 12px' }}>
+                <div style={{ gridColumn: '1 / -1', backgroundColor: '#7c3aed10', border: '1px solid #7c3aed20', borderRadius: '8px', padding: isMobile ? '8px 10px' : '10px 12px' }}>
                   <p style={labelSt}>✨ Análisis IA</p>
                   <p style={{ fontSize: '12px', color: '#c4b5fd', lineHeight: '1.5', margin: 0 }}>{modulo.notasIA}</p>
                 </div>

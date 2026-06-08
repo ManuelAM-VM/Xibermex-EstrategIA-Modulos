@@ -33,6 +33,7 @@ export default function RegistrarPage() {
     nombre: '', proyectoId: '', colaboradorId: '',
     tipoTarea: 'DESARROLLO', complejidad: 'MEDIA',
     horasEstimadas: '', descripcion: '',
+    fechaInicio: new Date().toISOString().split('T')[0],
   })
 
   useEffect(() => {
@@ -56,7 +57,8 @@ export default function RegistrarPage() {
 
   const handleLimpiar = () => {
     setForm({ nombre: '', proyectoId: proyectos[0]?.id || '', colaboradorId: colaboradores[0]?.id || '',
-      tipoTarea: 'DESARROLLO', complejidad: 'MEDIA', horasEstimadas: '', descripcion: '' })
+      tipoTarea: 'DESARROLLO', complejidad: 'MEDIA', horasEstimadas: '', descripcion: '',
+      fechaInicio: new Date().toISOString().split('T')[0] })
     setAnalisisIA(null); setError(null)
   }
 
@@ -144,6 +146,13 @@ export default function RegistrarPage() {
             <div>
               <label style={labelStyle}>Horas estimadas</label>
               <input type="number" value={form.horasEstimadas} onChange={e => setForm({ ...form, horasEstimadas: e.target.value })} placeholder="Ej. 8" min="0.5" step="0.5" />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: cols1, gap: '14px', marginBottom: '14px' }}>
+            <div>
+              <label style={labelStyle}>Fecha de inicio</label>
+              <input type="date" value={form.fechaInicio} onChange={e => setForm({ ...form, fechaInicio: e.target.value })} style={{ colorScheme: 'dark' }} />
             </div>
           </div>
 

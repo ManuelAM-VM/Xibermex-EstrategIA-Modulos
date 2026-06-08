@@ -39,11 +39,12 @@ model Modulo {
   horasReales    Float?
   estado         String   @default("PENDIENTE")
   tarifaHora     Float    @default(500)
-  modoPago       String   @default("POR_HORA")   // POR_HORA | POR_DIA | MONTO_FIJO
-  montoFijo      Float?                           // usado cuando modoPago = MONTO_FIJO
+  modoPago       String   @default("POR_HORA")
+  montoFijo      Float?
   montoTotal     Float?
   pagado         Boolean  @default(false)
   montoPagado    Float    @default(0)
+  fechaInicio    DateTime @default(now())
   fechaEntrega   DateTime?
   notasIA        String?
   alertaHoras    Boolean  @default(false)

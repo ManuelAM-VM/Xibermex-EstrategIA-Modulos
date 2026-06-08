@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { nombre, descripcion, tipoTarea, complejidad, horasEstimadas, colaboradorId, proyectoId, tarifaHora } = body
+    const { nombre, descripcion, tipoTarea, complejidad, horasEstimadas, colaboradorId, proyectoId, tarifaHora, fechaInicio } = body
 
     if (!nombre || !colaboradorId || !proyectoId || !horasEstimadas) {
       return NextResponse.json(
@@ -79,6 +79,7 @@ export async function POST(request: Request) {
         tarifaHora:     tarifa,
         montoTotal:     monto,
         alertaHoras:    alerta,
+        fechaInicio:    fechaInicio ? new Date(fechaInicio) : new Date(),
         colaboradorId,
         proyectoId,
         estado: 'PENDIENTE',

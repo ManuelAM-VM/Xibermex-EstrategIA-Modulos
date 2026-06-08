@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import PageHeader from '@/components/PageHeader'
-import { Search, Trash2, CheckCircle, Clock, AlertTriangle, Edit2, X, Save } from 'lucide-react'
+import { Search, Trash2, CheckCircle, Clock, AlertTriangle, Edit2, X, Save, Calendar } from 'lucide-react'
 import {
   COMPLEJIDAD_LABELS, ESTADO_LABELS, TIPO_TAREA_LABELS,
-  TIPOS_TAREA, COMPLEJIDADES
+  TIPOS_TAREA, COMPLEJIDADES, getQuincena, getQuincenaActual
 } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
@@ -544,6 +544,7 @@ export default function ModulosPage() {
   const [filtros, setFiltros] = useState({
     colaboradorId: '', proyectoId: '', estado: '', complejidad: '', busqueda: '',
   })
+  const [ocultarPagadosAnteriores, setOcultarPagadosAnteriores] = useState(true)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -579,12 +580,19 @@ export default function ModulosPage() {
     setModulos(prev => prev.filter(m => m.id !== id))
   }, [])
 
-  const modulosFiltrados = modulos.filter(m =>
-    filtros.busqueda
-      ? m.nombre.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
-        m.colaborador.nombre.toLowerCase().includes(filtros.busqueda.toLowerCase())
-      : true
-  )
+  const quincenaActual = getQuincenaActual()
+
+  const modulosFiltrados = modulos.filter(m => {
+    if (filtros.busqueda) {
+      const q = filtros.busqueda.toLowerCase()
+      if (!m.nombre.toLowerCase().includes(q) && !m.colaborador.nombre.toLowerCase().includes(q)) return false
+    }
+    if (ocultarPagadosAnteriores && m.pagado) {
+      const mQ = getQuincena(m.createdAt)
+      if (mQ.id !== quincenaActual.id) return false
+    }
+    return true
+  })
 
   const totalMonto     = modulosFiltrados.reduce((a, m) => a + (m.montoTotal ?? 0), 0)
   const totalPagado    = modulosFiltrados.reduce((a, m) => a + m.montoPagado, 0)
@@ -638,6 +646,22 @@ export default function ModulosPage() {
               </select>
             </div>
           )}
+          {/* Toggle ocultar pagados anteriores */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto' }}>
+            <button
+              onClick={() => setOcultarPagadosAnteriores(!ocultarPagadosAnteriores)}
+              style={{
+                background: ocultarPagadosAnteriores ? '#7c3aed20' : 'transparent',
+                border: `1px solid ${ocultarPagadosAnteriores ? '#7c3aed40' : '#2a2a3a'}`,
+                color: ocultarPagadosAnteriores ? '#a78bfa' : '#6b7280',
+                fontSize: '12px', padding: '6px 10px', borderRadius: '6px',
+                display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer',
+              }}
+            >
+              <Calendar size={12} />
+              {ocultarPagadosAnteriores ? 'Solo quincena actual' : 'Todas las quincenas'}
+            </button>
+          </div>
         </div>
 
         {/* Header columnas desktop */}

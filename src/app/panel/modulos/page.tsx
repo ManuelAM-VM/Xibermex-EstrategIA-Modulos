@@ -152,9 +152,12 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
           horasExtra: horasExtraVal ? parseFloat(horasExtraVal) : null,
           descripcion: descripcion || null,
           tipoTarea, complejidad, modoPago,
-          tarifaHora: parseFloat(tarifa) || 500,
+          tarifaHora: parseFloat(tarifaDia) / parseFloat(horasPorDia) || 58,
           montoFijo: modoPago === 'MONTO_FIJO' ? (parseFloat(montoFijo) || null) : null,
           _horasParaPago: horasActivas,
+          _tarifaDia: tarifaDia,
+          _horasPorDia: horasPorDia,
+          _tarifaExtra: tarifaExtra,
           ...(estado === 'APROBADO' && !modulo.fechaEntrega ? { fechaEntrega: new Date().toISOString() } : {}),
         }),
       })

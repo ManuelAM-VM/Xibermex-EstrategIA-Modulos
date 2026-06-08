@@ -51,17 +51,33 @@ export async function PATCH(
 
     if (modoPago === 'POR_HORA') {
       // Sistema de días + horas extra (cada hora extra se paga individualmente)
-      const cfgExtra       = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_extra' } })
-      const cfgHorasDia    = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
-      const cfgTarifaDia   = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
+      // Usar valores del body si se enviaron, si no leer de config
+      const cfgExtra     = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_extra' } })
+      const cfgHorasDia  = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
+      const cfgTarifaDia = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
 
-      const tarifaDiaCfg      = parseFloat(cfgTarifaDia?.valor ?? '350')
-      const horasDiaCfg       = parseFloat(cfgHorasDia?.valor ?? '6')
-      const tarifaExtraCfg    = parseFloat(cfgExtra?.valor ?? '550')
+      // Si el body trae _tarifaDia, _horasPorDia, _tarifaExtra usarlos (vienen del modal)
+      const tarifaDiaCfg   = bodyLimpio._tarifaDia   != null ? parseFloat(bodyLimpio._tarifaDia)   : parseFloat(cfgTarifaDia?.valor ?? '350')
+      const horasDiaCfg    = bodyLimpio._horasPorDia != null ? parseFloat(bodyLimpio._horasPorDia) : parseFloat(cfgHorasDia?.valor ?? '6')
+      const tarifaExtraCfg = bodyLimpio._tarifaExtra != null ? parseFloat(bodyLimpio._tarifaExtra) : parseFloat(cfgExtra?.valor ?? '550')
 
-      const dias = Math.floor(horasParaCalculo / horasDiaCfg)
-      const horasRestantes = horasParaCalculo % horasDiaCfg
-      montoTotal = (dias * tarifaDiaCfg) + (horasRestantes * tarifaExtraCfg)
+      // Si hay horasNormales y horasExtra manuales, usar esas
+      const hn = bodyLimpio.horasNormales != null ? parseFloat(bodyLimpio.horasNormales) : null
+      const he = bodyLimpio.horasExtra != null ? parseFloat(bodyLimpio.horasExtra) : null
+
+      if (hn != null || he != null) {
+        const diasManuales = Math.ceil((hn || 0) / horasDiaCfg) || ((hn || 0) > 0 ? 1 : 0)
+        montoTotal = (diasManuales * tarifaDiaCfg) + ((he || 0) * tarifaExtraCfg)
+      } else {
+        const dias = Math.floor(horasParaCalculo / horasDiaCfg)
+        const horasRestantes = horasParaCalculo % horasDiaCfg
+        montoTotal = (dias * tarifaDiaCfg) + (horasRestantes * tarifaExtraCfg)
+      }
+
+      // Limpiar campos virtuales antes de guardar
+      delete bodyLimpio._tarifaDia
+      delete bodyLimpio._horasPorDia
+      delete bodyLimpio._tarifaExtra
     } else if (modoPago === 'POR_DIA') {
       const cfgHorasDia  = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
       const horasDiaCfg  = parseFloat(cfgHorasDia?.valor ?? '6')

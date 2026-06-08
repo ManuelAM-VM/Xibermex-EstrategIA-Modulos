@@ -65,8 +65,7 @@ export async function POST(request: Request) {
 
     const dias           = Math.floor(horas / horasDiaVal)
     const horasRestantes = horas % horasDiaVal
-    const bloquesExtra   = Math.ceil(horasRestantes / bloqueExtraVal)
-    const monto          = (dias * tarifaDiaVal) + (bloquesExtra * tarifaExtraVal)
+    const monto          = (dias * tarifaDiaVal) + (horasRestantes * tarifaExtraVal)
     const { alerta } = detectarAlertaHoras(horas, complejidad || 'MEDIA')
 
     const modulo = await prisma.modulo.create({
@@ -79,13 +78,17 @@ export async function POST(request: Request) {
         tarifaHora:     tarifa,
         montoTotal:     monto,
         alertaHoras:    alerta,
-        fechaInicio:    fechaInicio ? new Date(fechaInicio) : new Date(),
         colaboradorId,
         proyectoId,
         estado: 'PENDIENTE',
       },
       include: { colaborador: true, proyecto: true },
     })
+
+    // Actualizar fechaInicio via raw SQL (el cliente Prisma no se ha regenerado)
+    if (fechaInicio) {
+      await prisma.$executeRaw`UPDATE modulos SET "fechaInicio" = ${new Date(fechaInicio)} WHERE id = ${modulo.id}`
+    }
     return NextResponse.json(modulo, { status: 201 })
   } catch (error) {
     console.error('Error creating modulo:', error)

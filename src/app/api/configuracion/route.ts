@@ -43,7 +43,6 @@ export async function POST(request: Request) {
       const tarifaDia       = parseFloat(tarifaDiaStr ?? cfgTarifa?.valor ?? '350')
       const horasDia        = parseFloat(horasDiaStr  ?? cfgHoras?.valor  ?? '6')
       const tarifaExtra     = parseFloat(body.tarifa_extra ?? cfgExtra?.valor ?? '550')
-      const horasBloqueExtra = parseFloat(body.horas_bloque_extra ?? cfgBloqueExtra?.valor ?? '2')
       const tarifaHora      = horasDia > 0 ? tarifaDia / horasDia : 0
 
       // Obtener todos los módulos que usan tarifa por hora o por día
@@ -51,19 +50,16 @@ export async function POST(request: Request) {
         where: { modoPago: { in: ['POR_HORA', 'POR_DIA'] } },
       })
 
-      // Recalcular montoTotal con sistema de días + horas extra
+      // Recalcular montoTotal: días × tarifaDia + horasExtra × tarifaExtra
       await Promise.all(
         modulos.map((m) => {
           let montoTotal: number
 
           if (m.modoPago === 'POR_HORA') {
-            // Sistema: días completos + bloques extra
             const dias = Math.floor(m.horasEstimadas / horasDia)
             const horasRestantes = m.horasEstimadas % horasDia
-            const bloquesExtra = Math.ceil(horasRestantes / horasBloqueExtra)
-            montoTotal = (dias * tarifaDia) + (bloquesExtra * tarifaExtra)
+            montoTotal = (dias * tarifaDia) + (horasRestantes * tarifaExtra)
           } else {
-            // POR_DIA: usar ceil para contar días completos
             const dias = Math.ceil(m.horasEstimadas / horasDia)
             montoTotal = dias * tarifaDia
           }
@@ -77,7 +73,7 @@ export async function POST(request: Request) {
         })
       )
 
-      console.log(`Recalculados ${modulos.length} módulos con tarifa $${tarifaDia}/día (${horasDia}h) + $${tarifaExtra}/extra (${horasBloqueExtra}h)`)
+      console.log(`Recalculados ${modulos.length} módulos con tarifa $${tarifaDia}/día (${horasDia}h) + $${tarifaExtra}/hr extra`)
     }
 
     return NextResponse.json({ success: true })

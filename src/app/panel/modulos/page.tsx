@@ -97,11 +97,9 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
     const td = parseFloat(tarifaDia) || 350
     const hd = parseFloat(horasPorDia) || 6
     const te = parseFloat(tarifaExtra) || 550
-    const hbe = parseFloat(horasBloqueExtra) || 2
     const dias = Math.floor(horasActivas / hd)
     const horasRestantes = horasActivas % hd
-    const bloquesExtra = horasRestantes > 0 ? Math.ceil(horasRestantes / hbe) : 0
-    return (dias * td) + (bloquesExtra * te)
+    return (dias * td) + (horasRestantes * te)
   })()
 
   const estadoColor = ESTADO_COLORS[estado] || { bg: '#2a2a3a', text: '#9ca3af' }

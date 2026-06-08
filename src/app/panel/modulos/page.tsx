@@ -15,6 +15,7 @@ interface Modulo {
   id: string; nombre: string; descripcion: string | null
   tipoTarea: string; complejidad: string
   horasEstimadas: number; horasReales: number | null
+  horasNormales: number | null; horasExtra: number | null
   montoTotal: number | null; montoPagado: number; pagado: boolean
   estado: string; alertaHoras: boolean; notasIA: string | null
   createdAt: string; fechaEntrega: string | null
@@ -63,6 +64,8 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
   const [estado, setEstado]                 = useState(modulo.estado)
   const [horasEstimadas, setHorasEstimadas] = useState(String(modulo.horasEstimadas))
   const [horasReales, setHorasReales]       = useState(String(modulo.horasReales ?? ''))
+  const [horasNormales, setHorasNormales]   = useState(String(modulo.horasNormales ?? ''))
+  const [horasExtraVal, setHorasExtraVal]   = useState(String(modulo.horasExtra ?? ''))
   const [descripcion, setDescripcion]       = useState(modulo.descripcion ?? '')
   const [tipoTarea, setTipoTarea]           = useState(modulo.tipoTarea)
   const [complejidad, setComplejidad]       = useState(modulo.complejidad)
@@ -88,6 +91,13 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
     }).catch(() => {})
   }, [])
 
+  // ¿Es un módulo del mes actual? Si no, los precios no se pueden modificar
+  const esModuloActual = (() => {
+    const now = new Date()
+    const created = new Date(modulo.createdAt)
+    return created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth()
+  })()
+
   const horasActivas = baseHoras === 'REALES' && horasReales
     ? parseFloat(horasReales) || 0
     : parseFloat(horasEstimadas) || 0
@@ -97,6 +107,14 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
     const td = parseFloat(tarifaDia) || 350
     const hd = parseFloat(horasPorDia) || 6
     const te = parseFloat(tarifaExtra) || 550
+    // Si el usuario definió horas normales y extras manualmente, usar esas
+    if (horasNormales || horasExtraVal) {
+      const hn = parseFloat(horasNormales) || 0
+      const he = parseFloat(horasExtraVal) || 0
+      const diasManuales = Math.ceil(hn / hd) || (hn > 0 ? 1 : 0)
+      return (diasManuales * td) + (he * te)
+    }
+    // Si no, calcular automáticamente
     const dias = Math.floor(horasActivas / hd)
     const horasRestantes = horasActivas % hd
     return (dias * td) + (horasRestantes * te)
@@ -120,6 +138,8 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
           estado,
           horasEstimadas: parseFloat(horasEstimadas) || modulo.horasEstimadas,
           horasReales: horasReales ? parseFloat(horasReales) : null,
+          horasNormales: horasNormales ? parseFloat(horasNormales) : null,
+          horasExtra: horasExtraVal ? parseFloat(horasExtraVal) : null,
           descripcion: descripcion || null,
           tipoTarea, complejidad, modoPago,
           tarifaHora: parseFloat(tarifa) || 500,
@@ -267,14 +287,23 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
           {/* Horas */}
           <div>
             <SectionTitle>Horas</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '10px' }}>
               <div><label style={labelSt}>Estimadas</label>
                 <input type="number" value={horasEstimadas} onChange={e => setHorasEstimadas(e.target.value)} min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
               </div>
               <div><label style={labelSt}>Reales trabajadas</label>
                 <input type="number" value={horasReales} onChange={e => setHorasReales(e.target.value)} placeholder="—" min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
               </div>
+              <div><label style={labelSt}>Hrs normales</label>
+                <input type="number" value={horasNormales} onChange={e => setHorasNormales(e.target.value)} placeholder="Auto" min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
+              </div>
+              <div><label style={labelSt}>Hrs extra</label>
+                <input type="number" value={horasExtraVal} onChange={e => setHorasExtraVal(e.target.value)} placeholder="Auto" min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
+              </div>
             </div>
+            <p style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px' }}>
+              Si defines hrs normales y extras manualmente, el cálculo usará esos valores. Si los dejas en blanco, se calcula automáticamente.
+            </p>
           </div>
 
           <div style={{ height: '1px', backgroundColor: '#1e1e2e' }} />
@@ -287,13 +316,13 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div><label style={labelSt}>$/día</label>
-                    <input type="number" value={tarifaDia} onChange={e => setTarifaDia(e.target.value)} min="0" step="50" style={{ fontSize: '14px' }} />
+                    <input type="number" value={tarifaDia} onChange={e => setTarifaDia(e.target.value)} min="0" step="50" style={{ fontSize: '14px' }} disabled={!esModuloActual} />
                   </div>
                   <div><label style={labelSt}>Hrs/día</label>
-                    <input type="number" value={horasPorDia} onChange={e => setHorasPorDia(e.target.value)} min="1" step="1" style={{ fontSize: '14px' }} />
+                    <input type="number" value={horasPorDia} onChange={e => setHorasPorDia(e.target.value)} min="1" step="1" style={{ fontSize: '14px' }} disabled={!esModuloActual} />
                   </div>
                   <div><label style={labelSt}>$/hr extra</label>
-                    <input type="number" value={tarifaExtra} onChange={e => setTarifaExtra(e.target.value)} min="0" step="50" style={{ fontSize: '14px' }} />
+                    <input type="number" value={tarifaExtra} onChange={e => setTarifaExtra(e.target.value)} min="0" step="50" style={{ fontSize: '14px' }} disabled={!esModuloActual} />
                   </div>
                   <div><label style={labelSt}>Base</label>
                     <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '14px' }}>
@@ -321,13 +350,13 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '12px' }}>
                   <div><label style={labelSt}>$/día</label>
-                    <input type="number" value={tarifaDia} onChange={e => setTarifaDia(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} />
+                    <input type="number" value={tarifaDia} onChange={e => setTarifaDia(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} disabled={!esModuloActual} />
                   </div>
                   <div><label style={labelSt}>Hrs/día</label>
-                    <input type="number" value={horasPorDia} onChange={e => setHorasPorDia(e.target.value)} min="1" step="1" style={{ fontSize: '13px' }} />
+                    <input type="number" value={horasPorDia} onChange={e => setHorasPorDia(e.target.value)} min="1" step="1" style={{ fontSize: '13px' }} disabled={!esModuloActual} />
                   </div>
                   <div><label style={labelSt}>$/hr extra</label>
-                    <input type="number" value={tarifaExtra} onChange={e => setTarifaExtra(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} />
+                    <input type="number" value={tarifaExtra} onChange={e => setTarifaExtra(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} disabled={!esModuloActual} />
                   </div>
                   <div><label style={labelSt}>Base</label>
                     <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '13px' }}>

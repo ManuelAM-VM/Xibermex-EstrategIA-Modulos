@@ -37,6 +37,8 @@ model Modulo {
   complejidad    String   @default("MEDIA")
   horasEstimadas Float
   horasReales    Float?
+  horasNormales  Float?
+  horasExtra     Float?
   estado         String   @default("PENDIENTE")
   tarifaHora     Float    @default(500)
   modoPago       String   @default("POR_HORA")

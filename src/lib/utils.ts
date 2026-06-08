@@ -138,13 +138,13 @@ export function getQuincena(fecha: Date | string): Quincena {
   const month = d.getMonth() // 0-indexed
   const day = d.getDate()
 
-  const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   const mesStr = meses[month]
 
   if (day <= 15) {
     return {
       id: `${year}-${String(month + 1).padStart(2, '0')}-Q1`,
-      label: `1ra quincena ${mesStr} ${year}`,
+      label: `1ra quincena de ${mesStr}`,
       inicio: new Date(year, month, 1),
       fin: new Date(year, month, 15, 23, 59, 59),
     }
@@ -152,7 +152,7 @@ export function getQuincena(fecha: Date | string): Quincena {
     const ultimoDia = new Date(year, month + 1, 0).getDate()
     return {
       id: `${year}-${String(month + 1).padStart(2, '0')}-Q2`,
-      label: `2da quincena ${mesStr} ${year}`,
+      label: `2da quincena de ${mesStr}`,
       inicio: new Date(year, month, 16),
       fin: new Date(year, month, ultimoDia, 23, 59, 59),
     }

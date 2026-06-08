@@ -67,20 +67,41 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
   const [tipoTarea, setTipoTarea]           = useState(modulo.tipoTarea)
   const [complejidad, setComplejidad]       = useState(modulo.complejidad)
   const [modoPago, setModoPago]             = useState(modulo.modoPago ?? 'POR_HORA')
-  const [tarifa, setTarifa]                 = useState(String(modulo.tarifaHora ?? 500))
+  const [tarifa, setTarifa]                 = useState(String(modulo.tarifaHora ?? 350))
   const [montoFijo, setMontoFijo]           = useState(String(modulo.montoFijo ?? ''))
   const [baseHoras, setBaseHoras]           = useState<'ESTIMADAS' | 'REALES'>('ESTIMADAS')
+  // Config de pago por módulo
+  const [tarifaDia, setTarifaDia]           = useState('350')
+  const [horasPorDia, setHorasPorDia]       = useState('6')
+  const [tarifaExtra, setTarifaExtra]       = useState('550')
+  const [horasBloqueExtra, setHorasBloqueExtra] = useState('2')
+
+  // Cargar config desde servidor
+  useEffect(() => {
+    fetch('/api/configuracion').then(r => r.json()).then(cfg => {
+      if (cfg && !cfg.error) {
+        setTarifaDia(cfg.tarifa_dia || '350')
+        setHorasPorDia(cfg.horas_dia || '6')
+        setTarifaExtra(cfg.tarifa_extra || '550')
+        setHorasBloqueExtra(cfg.horas_bloque_extra || '2')
+      }
+    }).catch(() => {})
+  }, [])
 
   const horasActivas = baseHoras === 'REALES' && horasReales
     ? parseFloat(horasReales) || 0
     : parseFloat(horasEstimadas) || 0
 
   const montoPreview = (() => {
-    const t = parseFloat(tarifa) || 0
-    if (modoPago === 'POR_HORA')   return t * horasActivas
-    if (modoPago === 'POR_DIA')    return t * (Math.ceil(horasActivas / 8) || 1)
     if (modoPago === 'MONTO_FIJO') return parseFloat(montoFijo) || 0
-    return 0
+    const td = parseFloat(tarifaDia) || 350
+    const hd = parseFloat(horasPorDia) || 6
+    const te = parseFloat(tarifaExtra) || 550
+    const hbe = parseFloat(horasBloqueExtra) || 2
+    const dias = Math.floor(horasActivas / hd)
+    const horasRestantes = horasActivas % hd
+    const bloquesExtra = horasRestantes > 0 ? Math.ceil(horasRestantes / hbe) : 0
+    return (dias * td) + (bloquesExtra * te)
   })()
 
   const estadoColor = ESTADO_COLORS[estado] || { bg: '#2a2a3a', text: '#9ca3af' }

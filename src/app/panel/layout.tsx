@@ -11,7 +11,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       <Sidebar />
       <main style={{
         flex: 1,
-        marginLeft: isMobile ? 0 : '220px',
+        marginLeft: isMobile ? 0 : '200px',
         paddingTop: isMobile ? '52px' : 0,
         // 56px nav + safe area iPhone (barra de inicio)
         paddingBottom: isMobile ? 'calc(56px + env(safe-area-inset-bottom, 0px))' : 0,

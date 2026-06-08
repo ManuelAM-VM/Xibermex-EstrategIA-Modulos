@@ -283,39 +283,25 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
           <div>
             <SectionTitle>Pago</SectionTitle>
             {isMobile ? (
-              /* Móvil: layout vertical compacto */
+              /* Móvil */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div><label style={labelSt}>Modo</label>
-                    <select value={modoPago} onChange={e => {
-                      setModoPago(e.target.value)
-                      if (e.target.value === 'POR_HORA')   setTarifa('500')
-                      if (e.target.value === 'POR_DIA')    setTarifa('4000')
-                      if (e.target.value === 'MONTO_FIJO') setMontoFijo('')
-                    }} style={{ width: '100%', fontSize: '14px' }}>
-                      <option value="POR_HORA">Por hora</option>
-                      <option value="POR_DIA">Por día</option>
-                      <option value="MONTO_FIJO">Monto fijo</option>
-                    </select>
+                  <div><label style={labelSt}>$/día</label>
+                    <input type="number" value={tarifaDia} onChange={e => setTarifaDia(e.target.value)} min="0" step="50" style={{ fontSize: '14px' }} />
                   </div>
-                  {modoPago !== 'MONTO_FIJO' ? (
-                    <div><label style={labelSt}>{modoPago === 'POR_HORA' ? 'Tarifa/hora ($)' : 'Tarifa/día ($)'}</label>
-                      <input type="number" value={tarifa} onChange={e => setTarifa(e.target.value)} min="0" step="50" style={{ fontSize: '14px' }} />
-                    </div>
-                  ) : (
-                    <div><label style={labelSt}>Monto fijo ($)</label>
-                      <input type="number" value={montoFijo} onChange={e => setMontoFijo(e.target.value)} placeholder="Ej. 5000" min="0" style={{ fontSize: '14px' }} />
-                    </div>
-                  )}
-                </div>
-                {modoPago !== 'MONTO_FIJO' && (
-                  <div><label style={labelSt}>Base de cálculo</label>
+                  <div><label style={labelSt}>Hrs/día</label>
+                    <input type="number" value={horasPorDia} onChange={e => setHorasPorDia(e.target.value)} min="1" step="1" style={{ fontSize: '14px' }} />
+                  </div>
+                  <div><label style={labelSt}>$/hr extra</label>
+                    <input type="number" value={tarifaExtra} onChange={e => setTarifaExtra(e.target.value)} min="0" step="50" style={{ fontSize: '14px' }} />
+                  </div>
+                  <div><label style={labelSt}>Base</label>
                     <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '14px' }}>
                       <option value="ESTIMADAS">Estimadas ({horasEstimadas}h)</option>
-                      <option value="REALES" disabled={!horasReales}>Reales {horasReales ? `(${horasReales}h)` : '(sin registrar)'}</option>
+                      <option value="REALES" disabled={!horasReales}>Reales {horasReales ? `(${horasReales}h)` : ''}</option>
                     </select>
                   </div>
-                )}
+                </div>
                 {/* Resumen compacto móvil */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f0f16', border: '1px solid #252535', borderRadius: '10px', padding: '12px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -331,36 +317,24 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                 </div>
               </div>
             ) : (
-              /* Desktop: igual que antes */
+              /* Desktop */
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
-                  <div><label style={labelSt}>Modo de pago</label>
-                    <select value={modoPago} onChange={e => {
-                      setModoPago(e.target.value)
-                      if (e.target.value === 'POR_HORA')   setTarifa('500')
-                      if (e.target.value === 'POR_DIA')    setTarifa('4000')
-                      if (e.target.value === 'MONTO_FIJO') setMontoFijo('')
-                    }} style={{ width: '100%', fontSize: '13px' }}>
-                      <option value="POR_HORA">Por hora</option>
-                      <option value="POR_DIA">Por día</option>
-                      <option value="MONTO_FIJO">Monto fijo</option>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '12px' }}>
+                  <div><label style={labelSt}>$/día</label>
+                    <input type="number" value={tarifaDia} onChange={e => setTarifaDia(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} />
+                  </div>
+                  <div><label style={labelSt}>Hrs/día</label>
+                    <input type="number" value={horasPorDia} onChange={e => setHorasPorDia(e.target.value)} min="1" step="1" style={{ fontSize: '13px' }} />
+                  </div>
+                  <div><label style={labelSt}>$/hr extra</label>
+                    <input type="number" value={tarifaExtra} onChange={e => setTarifaExtra(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} />
+                  </div>
+                  <div><label style={labelSt}>Base</label>
+                    <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '13px' }}>
+                      <option value="ESTIMADAS">Estimadas ({horasEstimadas}h)</option>
+                      <option value="REALES" disabled={!horasReales}>Reales {horasReales ? `(${horasReales}h)` : ''}</option>
                     </select>
                   </div>
-                  {modoPago !== 'MONTO_FIJO' ? (<>
-                    <div><label style={labelSt}>{modoPago === 'POR_HORA' ? 'Tarifa/hora ($)' : 'Tarifa/día ($)'}</label>
-                      <input type="number" value={tarifa} onChange={e => setTarifa(e.target.value)} min="0" step="50" style={{ fontSize: '13px' }} />
-                    </div>
-                    <div><label style={labelSt}>Base de cálculo</label>
-                      <select value={baseHoras} onChange={e => setBaseHoras(e.target.value as 'ESTIMADAS' | 'REALES')} style={{ width: '100%', fontSize: '13px' }}>
-                        <option value="ESTIMADAS">Estimadas ({horasEstimadas}h)</option>
-                        <option value="REALES" disabled={!horasReales}>Reales {horasReales ? `(${horasReales}h)` : '(sin registrar)'}</option>
-                      </select>
-                    </div>
-                  </>) : (
-                    <div style={{ gridColumn: '1 / -1' }}><label style={labelSt}>Monto fijo ($)</label>
-                      <input type="number" value={montoFijo} onChange={e => setMontoFijo(e.target.value)} placeholder="Ej. 5000" min="0" style={{ fontSize: '13px', maxWidth: '200px' }} />
-                    </div>
-                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f0f16', border: '1px solid #252535', borderRadius: '10px', padding: '14px 18px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -374,7 +348,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <p style={{ fontSize: '11px', color: '#4b5563', marginBottom: '2px' }}>
-                      {modoPago === 'POR_HORA' ? `${horasActivas}h × $${tarifa}/hr` : modoPago === 'POR_DIA' ? `${Math.ceil(horasActivas / 8) || 1}d × $${tarifa}` : 'Monto fijo'}
+                      {modoPago === 'MONTO_FIJO' ? 'Monto fijo' : `${Math.floor(horasActivas / (parseFloat(horasPorDia) || 6))}d × $${tarifaDia} + ${(horasActivas % (parseFloat(horasPorDia) || 6)).toFixed(0)}h extra × $${tarifaExtra}`}
                     </p>
                     <p style={{ fontSize: '22px', fontWeight: '800', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
                   </div>
@@ -392,7 +366,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
               {[
                 { label: 'Colaborador', value: modulo.colaborador.nombre.split(' ')[0] },
                 { label: 'Proyecto',    value: modulo.proyecto.nombre },
-                { label: 'Tarifa/hr',   value: `$${modulo.tarifaHora.toFixed(0)}/hr` },
+                { label: 'Tarifa',   value: `$${tarifaDia}/día + $${tarifaExtra}/hr extra` },
                 { label: 'Creado',      value: new Date(modulo.createdAt).toLocaleDateString('es-MX') },
                 ...(modulo.fechaEntrega ? [{ label: 'Entregado', value: new Date(modulo.fechaEntrega).toLocaleDateString('es-MX') }] : []),
               ].map(f => (

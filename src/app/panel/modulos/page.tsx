@@ -78,14 +78,21 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
   const [horasPorDia, setHorasPorDia]       = useState('6')
   const [tarifaExtra, setTarifaExtra]       = useState('550')
   const [horasBloqueExtra, setHorasBloqueExtra] = useState('2')
+  // Valores iniciales para detectar cambios
+  const [tarifaDiaInit, setTarifaDiaInit]       = useState('350')
+  const [horasPorDiaInit, setHorasPorDiaInit]   = useState('6')
+  const [tarifaExtraInit, setTarifaExtraInit]   = useState('550')
 
   // Cargar config desde servidor
   useEffect(() => {
     fetch('/api/configuracion').then(r => r.json()).then(cfg => {
       if (cfg && !cfg.error) {
-        setTarifaDia(cfg.tarifa_dia || '350')
-        setHorasPorDia(cfg.horas_dia || '6')
-        setTarifaExtra(cfg.tarifa_extra || '550')
+        const td = cfg.tarifa_dia || '350'
+        const hd = cfg.horas_dia || '6'
+        const te = cfg.tarifa_extra || '550'
+        setTarifaDia(td); setTarifaDiaInit(td)
+        setHorasPorDia(hd); setHorasPorDiaInit(hd)
+        setTarifaExtra(te); setTarifaExtraInit(te)
         setHorasBloqueExtra(cfg.horas_bloque_extra || '2')
       }
     }).catch(() => {})
@@ -125,8 +132,11 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
   const dirty = estado !== modulo.estado || horasEstimadas !== String(modulo.horasEstimadas) ||
     horasReales !== String(modulo.horasReales ?? '') || descripcion !== (modulo.descripcion ?? '') ||
     tipoTarea !== modulo.tipoTarea || complejidad !== modulo.complejidad ||
-    modoPago !== (modulo.modoPago ?? 'POR_HORA') || tarifa !== String(modulo.tarifaHora ?? 500) ||
-    montoFijo !== String(modulo.montoFijo ?? '')
+    modoPago !== (modulo.modoPago ?? 'POR_HORA') || tarifa !== String(modulo.tarifaHora ?? 350) ||
+    montoFijo !== String(modulo.montoFijo ?? '') ||
+    horasNormales !== String(modulo.horasNormales ?? '') ||
+    horasExtraVal !== String(modulo.horasExtra ?? '') ||
+    tarifaDia !== tarifaDiaInit || horasPorDia !== horasPorDiaInit || tarifaExtra !== tarifaExtraInit
 
   const handleSave = async () => {
     setSaving(true)

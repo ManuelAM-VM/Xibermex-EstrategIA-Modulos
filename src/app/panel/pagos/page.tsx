@@ -21,7 +21,6 @@ export default function PagosPage() {
   const [loading, setLoading]             = useState(true)
   const [filtroCol, setFiltroCol]         = useState('')
   const [toggling, setToggling]           = useState<string | null>(null)
-  const [mostrarAnteriores, setMostrarAnteriores] = useState(false)
   const isMobile = useIsMobile()
 
   const fetchData = useCallback(async () => {
@@ -53,37 +52,10 @@ export default function PagosPage() {
     } finally { setToggling(null) }
   }
 
-  // Filtrar por colaborador
   const filtrados = modulos.filter(m => !filtroCol || m.colaborador.id === filtroCol)
-
-  // Quincena actual
+  const quincenas = getQuincenasDesdeModulos(filtrados.map(m => m.createdAt))
   const quincenaActual = getQuincenaActual()
 
-  // Separar módulos por quincena
-  const modulosConQuincena = filtrados.map(m => ({
-    ...m,
-    quincena: getQuincena(m.createdAt),
-  }))
-
-  // Módulos de la quincena actual (todos se muestran)
-  const modulosActuales = modulosConQuincena.filter(m => m.quincena.id === quincenaActual.id)
-
-  // Módulos de quincenas anteriores
-  const modulosAnteriores = modulosConQuincena.filter(m => m.quincena.id !== quincenaActual.id)
-
-  // En anteriores: ocultar pagados/entregados a menos que se pida mostrar
-  const anterioresVisibles = mostrarAnteriores
-    ? modulosAnteriores
-    : modulosAnteriores.filter(m => !m.pagado && (m.montoTotal ?? 0) > 0)
-
-  // Agrupar anteriores por quincena
-  const quincenasAnteriores = getQuincenasDesdeModulos(anterioresVisibles.map(m => m.createdAt))
-
-  // Totales
-  const porPagarActual = modulosActuales.filter(m => !m.pagado && (m.montoTotal ?? 0) > 0)
-    .reduce((a, m) => a + ((m.montoTotal ?? 0) - m.montoPagado), 0)
-  const pagadoActual = modulosActuales.filter(m => m.pagado)
-    .reduce((a, m) => a + m.montoPagado, 0)
   const totalPorPagar = filtrados.filter(m => !m.pagado && (m.montoTotal ?? 0) > 0)
     .reduce((a, m) => a + ((m.montoTotal ?? 0) - m.montoPagado), 0)
   const totalPagado = filtrados.filter(m => m.pagado).reduce((a, m) => a + m.montoPagado, 0)
@@ -94,7 +66,6 @@ export default function PagosPage() {
     <div>
       <PageHeader title="Pagos" subtitle="Control por quincena" onRefresh={fetchData} />
       <div style={{ padding: pad }}>
-
         {/* Filtro + totales */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
           <select value={filtroCol} onChange={e => setFiltroCol(e.target.value)} style={{ flex: isMobile ? 1 : 'none' }}>
@@ -109,59 +80,26 @@ export default function PagosPage() {
 
         {loading ? (
           <div style={{ color: '#6b7280', textAlign: 'center', padding: '40px' }}>Cargando...</div>
+        ) : quincenas.length === 0 ? (
+          <div style={{ backgroundColor: '#3b82f610', border: '1px solid #3b82f630', borderRadius: '8px', padding: '14px 18px', color: '#60a5fa', fontSize: '14px' }}>Sin módulos</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-            {/* ── Quincena actual ── */}
-            <QuincenaSection
-              quincena={quincenaActual}
-              modulos={modulosActuales}
-              onToggle={handleToggle}
-              toggling={toggling}
-              isMobile={isMobile}
-              esCurrent
-              resumen={{ porPagar: porPagarActual, pagado: pagadoActual }}
-            />
-
-            {/* ── Quincenas anteriores ── */}
-            {modulosAnteriores.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setMostrarAnteriores(!mostrarAnteriores)}
-                  style={{
-                    background: 'none', border: '1px solid #2a2a3a', color: '#6b7280',
-                    padding: '8px 14px', borderRadius: '8px', fontSize: '12px',
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    marginBottom: '12px', cursor: 'pointer',
-                  }}
-                >
-                  <Calendar size={13} />
-                  {mostrarAnteriores ? 'Ocultar pagados de quincenas anteriores' : `Mostrar todos (${modulosAnteriores.length} módulos anteriores)`}
-                  {mostrarAnteriores ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                </button>
-
-                {anterioresVisibles.length > 0 && quincenasAnteriores.map(q => {
-                  const mods = anterioresVisibles.filter(m => m.quincena.id === q.id)
-                  if (mods.length === 0) return null
-                  return (
-                    <QuincenaSection
-                      key={q.id}
-                      quincena={q}
-                      modulos={mods}
-                      onToggle={handleToggle}
-                      toggling={toggling}
-                      isMobile={isMobile}
-                    />
-                  )
-                })}
-
-                {anterioresVisibles.length === 0 && !mostrarAnteriores && (
-                  <div style={{ fontSize: '12px', color: '#4b5563', padding: '8px 0' }}>
-                    Todos los módulos de quincenas anteriores están pagados.
-                  </div>
-                )}
-              </div>
-            )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {quincenas.map(q => {
+              const mods = filtrados.filter(m => getQuincena(m.createdAt).id === q.id)
+              const esCurrent = q.id === quincenaActual.id
+              return (
+                <QuincenaAccordion
+                  key={q.id}
+                  quincena={q}
+                  modulos={mods}
+                  onToggle={handleToggle}
+                  toggling={toggling}
+                  isMobile={isMobile}
+                  defaultOpen={esCurrent}
+                  esCurrent={esCurrent}
+                />
+              )
+            })}
           </div>
         )}
       </div>
@@ -169,61 +107,81 @@ export default function PagosPage() {
   )
 }
 
-// ── Sección por quincena ─────────────────────────────────────────────────────
-function QuincenaSection({ quincena, modulos, onToggle, toggling, isMobile, esCurrent, resumen }: {
-  quincena: Quincena
-  modulos: Modulo[]
-  onToggle: (m: Modulo) => void
-  toggling: string | null
-  isMobile: boolean
-  esCurrent?: boolean
-  resumen?: { porPagar: number; pagado: number }
+// ── Acordeón por quincena ────────────────────────────────────────────────────
+function QuincenaAccordion({ quincena, modulos, onToggle, toggling, isMobile, defaultOpen, esCurrent }: {
+  quincena: Quincena; modulos: Modulo[]
+  onToggle: (m: Modulo) => void; toggling: string | null
+  isMobile: boolean; defaultOpen: boolean; esCurrent: boolean
 }) {
+  const [open, setOpen] = useState(defaultOpen)
+
   const porPagar = modulos.filter(m => !m.pagado && (m.montoTotal ?? 0) > 0)
   const pagados  = modulos.filter(m => m.pagado)
+  const sumaPorPagar = porPagar.reduce((a, m) => a + ((m.montoTotal ?? 0) - m.montoPagado), 0)
+  const sumaPagado   = pagados.reduce((a, m) => a + m.montoPagado, 0)
 
   return (
     <div style={{
-      backgroundColor: esCurrent ? '#1a1a2410' : 'transparent',
-      border: esCurrent ? '1px solid #7c3aed30' : '1px solid #1e1e2e',
+      border: `1px solid ${esCurrent ? '#7c3aed30' : '#1e1e2e'}`,
       borderRadius: '12px',
-      padding: isMobile ? '14px' : '18px',
+      overflow: 'hidden',
+      backgroundColor: esCurrent ? '#1a1a2408' : '#16161f',
     }}>
-      {/* Header de quincena */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+      {/* Header clickeable */}
+      <div
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: isMobile ? '12px 14px' : '14px 18px',
+          cursor: 'pointer',
+          backgroundColor: esCurrent ? '#7c3aed08' : 'transparent',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Calendar size={14} color={esCurrent ? '#7c3aed' : '#6b7280'} />
+          <Calendar size={14} color={esCurrent ? '#7c3aed' : '#4b5563'} />
           <span style={{ fontSize: '13px', fontWeight: '600', color: esCurrent ? '#a78bfa' : '#9ca3af' }}>
             {quincena.label}
           </span>
           {esCurrent && (
-            <span style={{ fontSize: '10px', backgroundColor: '#7c3aed30', color: '#a78bfa', padding: '2px 7px', borderRadius: '10px' }}>
-              Actual
+            <span style={{ fontSize: '9px', backgroundColor: '#7c3aed30', color: '#a78bfa', padding: '2px 6px', borderRadius: '10px', fontWeight: '600' }}>
+              ACTUAL
             </span>
           )}
+          <span style={{ fontSize: '11px', color: '#4b5563' }}>
+            ({modulos.length})
+          </span>
         </div>
-        {resumen && (
-          <div style={{ display: 'flex', gap: '12px', fontSize: '12px' }}>
-            <span style={{ color: '#f59e0b' }}>${resumen.porPagar.toFixed(0)}</span>
-            <span style={{ color: '#10b981' }}>${resumen.pagado.toFixed(0)}</span>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {sumaPorPagar > 0 && <span style={{ fontSize: '12px', color: '#f59e0b', fontWeight: '600' }}>${sumaPorPagar.toFixed(0)}</span>}
+          {sumaPagado > 0 && <span style={{ fontSize: '12px', color: '#10b981', fontWeight: '600' }}>${sumaPagado.toFixed(0)}</span>}
+          <span style={{ color: '#4b5563' }}>{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
+        </div>
       </div>
 
-      {modulos.length === 0 ? (
-        <div style={{ fontSize: '12px', color: '#4b5563', textAlign: 'center', padding: '12px' }}>
-          Sin módulos en esta quincena
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {/* Por pagar primero */}
-          {porPagar.map(m => (
-            <PagoCard key={m.id} modulo={m} onToggle={onToggle} toggling={toggling === m.id} isMobile={isMobile} />
-          ))}
-          {/* Pagados después */}
-          {pagados.map(m => (
-            <PagoCard key={m.id} modulo={m} onToggle={onToggle} toggling={toggling === m.id} isMobile={isMobile} />
-          ))}
+      {/* Contenido */}
+      {open && (
+        <div style={{ padding: isMobile ? '0 12px 12px' : '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {porPagar.length > 0 && (
+            <>
+              <p style={{ fontSize: '10px', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '4px', marginBottom: '4px', fontWeight: '600' }}>
+                <Clock size={10} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                Por pagar ({porPagar.length})
+              </p>
+              {porPagar.map(m => <PagoCard key={m.id} modulo={m} onToggle={onToggle} toggling={toggling === m.id} isMobile={isMobile} />)}
+            </>
+          )}
+          {pagados.length > 0 && (
+            <>
+              <p style={{ fontSize: '10px', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '8px', marginBottom: '4px', fontWeight: '600' }}>
+                <CheckCircle size={10} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                Pagados ({pagados.length})
+              </p>
+              {pagados.map(m => <PagoCard key={m.id} modulo={m} onToggle={onToggle} toggling={toggling === m.id} isMobile={isMobile} />)}
+            </>
+          )}
+          {modulos.length === 0 && (
+            <p style={{ fontSize: '12px', color: '#4b5563', textAlign: 'center', padding: '12px' }}>Sin módulos</p>
+          )}
         </div>
       )}
     </div>
@@ -237,8 +195,8 @@ function PagoCard({ modulo, onToggle, toggling, isMobile }: {
   return (
     <div style={{
       backgroundColor: modulo.pagado ? '#10b98108' : '#1a1a24',
-      border: `1px solid ${modulo.pagado ? '#10b98120' : '#2a2a3a'}`,
-      borderRadius: '8px', padding: isMobile ? '10px 12px' : '12px 16px',
+      border: `1px solid ${modulo.pagado ? '#10b98118' : '#2a2a3a'}`,
+      borderRadius: '8px', padding: isMobile ? '10px 12px' : '11px 14px',
       display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px',
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>

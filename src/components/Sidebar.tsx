@@ -23,6 +23,8 @@ interface Config {
   tarifa_dia: string
   horas_dia: string
   anthropic_api_key: string
+  tarifa_extra: string
+  horas_bloque_extra: string
 }
 
 export default function Sidebar() {
@@ -33,7 +35,8 @@ export default function Sidebar() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [config, setConfig] = useState<Config>({
-    tarifa_dia: '500', horas_dia: '4', anthropic_api_key: '',
+    tarifa_dia: '350', horas_dia: '6', anthropic_api_key: '',
+    tarifa_extra: '550', horas_bloque_extra: '2',
   })
 
   useEffect(() => {
@@ -41,9 +44,11 @@ export default function Sidebar() {
       .then((r) => r.json())
       .then((data) => {
         if (data && !data.error) setConfig({
-          tarifa_dia:        data.tarifa_dia        || '500',
-          horas_dia:         data.horas_dia         || '4',
-          anthropic_api_key: data.anthropic_api_key || '',
+          tarifa_dia:         data.tarifa_dia         || '350',
+          horas_dia:          data.horas_dia          || '6',
+          anthropic_api_key:  data.anthropic_api_key  || '',
+          tarifa_extra:       data.tarifa_extra       || '550',
+          horas_bloque_extra: data.horas_bloque_extra || '2',
         })
       })
       .catch(() => {})
@@ -84,8 +89,8 @@ export default function Sidebar() {
     handleSaveConfig(newConfig)
   }
 
-  const TARIFA_DIA_OPTIONS = ['300', '400', '500', '600', '700', '800', '1000']
-  const HORAS_DIA_OPTIONS  = ['2', '3', '4', '5', '6', '7', '8']
+  const TARIFA_DIA_OPTIONS = ['250', '300', '350', '400', '450', '500', '600', '700', '800', '1000']
+  const HORAS_DIA_OPTIONS  = ['4', '5', '6', '7', '8']
 
   // ── MOBILE ──────────────────────────────────────────────────────────────
   if (isMobile) {
@@ -300,7 +305,7 @@ function ConfigPanel({
             {TARIFA_DIA_OPTIONS.map((v) => <option key={v} value={v}>${v}</option>)}
           </select>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
           <span style={{ color: '#6b7280' }}>hrs/día</span>
           <select
             value={config.horas_dia}
@@ -309,6 +314,28 @@ function ConfigPanel({
           >
             {HORAS_DIA_OPTIONS.map((v) => <option key={v} value={v}>{v} hrs</option>)}
           </select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ color: '#6b7280' }}>$/extra</span>
+          <input
+            type="number"
+            value={config.tarifa_extra}
+            onChange={(e) => { setConfig({ ...config, tarifa_extra: e.target.value }); }}
+            onBlur={handleSaveConfig}
+            style={{ fontSize: '12px', padding: '2px 6px', width: '60px', textAlign: 'right' }}
+            min="0" step="50"
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ color: '#6b7280' }}>hrs/bloque</span>
+          <input
+            type="number"
+            value={config.horas_bloque_extra}
+            onChange={(e) => { setConfig({ ...config, horas_bloque_extra: e.target.value }); }}
+            onBlur={handleSaveConfig}
+            style={{ fontSize: '12px', padding: '2px 6px', width: '40px', textAlign: 'right' }}
+            min="1" step="1"
+          />
         </div>
       </div>
 
@@ -319,7 +346,7 @@ function ConfigPanel({
         color: 'white', fontWeight: '600', marginBottom: '8px',
         transition: 'background-color 0.3s', fontSize: '12px',
       }}>
-        {saving ? 'Actualizando...' : saved ? '✓ Actualizado' : `$${tarifaHora.toFixed(2)} / hr`}
+        {saving ? 'Actualizando...' : saved ? '✓ Actualizado' : `$${tarifaHora.toFixed(0)} / hr`}
       </div>
 
       <div>

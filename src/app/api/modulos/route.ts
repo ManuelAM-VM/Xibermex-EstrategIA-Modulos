@@ -45,13 +45,28 @@ export async function POST(request: Request) {
     if (!tarifa) {
       const cfgTarifa = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
       const cfgHoras  = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
-      const tarifaDia = parseFloat(cfgTarifa?.valor || '500')
-      const horasDia  = parseFloat(cfgHoras?.valor  || '4')
-      tarifa = horasDia > 0 ? tarifaDia / horasDia : 125
+      const tarifaDia = parseFloat(cfgTarifa?.valor || '350')
+      const horasDia  = parseFloat(cfgHoras?.valor  || '6')
+      tarifa = horasDia > 0 ? tarifaDia / horasDia : 58
     }
 
     const horas = parseFloat(horasEstimadas)
-    const monto = horas * tarifa
+
+    // Calcular monto con sistema de días + horas extra
+    const cfgTarifaDia   = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
+    const cfgHorasDia    = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
+    const cfgTarifaExtra = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_extra' } })
+    const cfgBloqueExtra = await prisma.configuracion.findUnique({ where: { clave: 'horas_bloque_extra' } })
+
+    const tarifaDiaVal    = parseFloat(cfgTarifaDia?.valor ?? '350')
+    const horasDiaVal     = parseFloat(cfgHorasDia?.valor ?? '6')
+    const tarifaExtraVal  = parseFloat(cfgTarifaExtra?.valor ?? '550')
+    const bloqueExtraVal  = parseFloat(cfgBloqueExtra?.valor ?? '2')
+
+    const dias           = Math.floor(horas / horasDiaVal)
+    const horasRestantes = horas % horasDiaVal
+    const bloquesExtra   = Math.ceil(horasRestantes / bloqueExtraVal)
+    const monto          = (dias * tarifaDiaVal) + (bloquesExtra * tarifaExtraVal)
     const { alerta } = detectarAlertaHoras(horas, complejidad || 'MEDIA')
 
     const modulo = await prisma.modulo.create({

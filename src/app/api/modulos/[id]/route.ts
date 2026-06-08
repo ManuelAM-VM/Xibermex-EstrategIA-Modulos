@@ -50,9 +50,25 @@ export async function PATCH(
     let montoTotal: number | null = actual.montoTotal
 
     if (modoPago === 'POR_HORA') {
-      montoTotal = tarifaHora * horasParaCalculo
+      // Sistema de días + horas extra
+      const cfgExtra       = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_extra' } })
+      const cfgBloqueExtra = await prisma.configuracion.findUnique({ where: { clave: 'horas_bloque_extra' } })
+      const cfgHorasDia    = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
+      const cfgTarifaDia   = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
+
+      const tarifaDiaCfg      = parseFloat(cfgTarifaDia?.valor ?? '350')
+      const horasDiaCfg       = parseFloat(cfgHorasDia?.valor ?? '6')
+      const tarifaExtraCfg    = parseFloat(cfgExtra?.valor ?? '550')
+      const horasBloqueExCfg  = parseFloat(cfgBloqueExtra?.valor ?? '2')
+
+      const dias = Math.floor(horasParaCalculo / horasDiaCfg)
+      const horasRestantes = horasParaCalculo % horasDiaCfg
+      const bloquesExtra = Math.ceil(horasRestantes / horasBloqueExCfg)
+      montoTotal = (dias * tarifaDiaCfg) + (bloquesExtra * tarifaExtraCfg)
     } else if (modoPago === 'POR_DIA') {
-      const diasEstimados = Math.ceil(horasParaCalculo / 8) || 1
+      const cfgHorasDia  = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
+      const horasDiaCfg  = parseFloat(cfgHorasDia?.valor ?? '6')
+      const diasEstimados = Math.ceil(horasParaCalculo / horasDiaCfg) || 1
       montoTotal = tarifaHora * diasEstimados
     } else if (modoPago === 'MONTO_FIJO') {
       montoTotal = montoFijo ?? actual.montoTotal

@@ -71,7 +71,55 @@ export const HORAS_ESPERADAS: Record<string, { min: number; max: number }> = {
   MUY_ALTA: { min: 24, max: 80 },
 }
 
-// ── Quincenas ────────────────────────────────────────────────────────────────
+// ── Sistema de cálculo de pago ────────────────────────────────────────────────
+
+export interface ConfigPago {
+  tarifaDia: number       // $/día (default 350)
+  horasPorDia: number     // hrs que componen un día (default 6)
+  tarifaExtra: number     // $/bloque de horas extra (default 550)
+  horasPorBloqueExtra: number // hrs por bloque extra (default 2)
+}
+
+export const CONFIG_PAGO_DEFAULT: ConfigPago = {
+  tarifaDia: 350,
+  horasPorDia: 6,
+  tarifaExtra: 550,
+  horasPorBloqueExtra: 2,
+}
+
+export interface DesglosePago {
+  dias: number
+  horasDia: number
+  costoDias: number
+  horasExtra: number
+  bloquesExtra: number
+  costoExtra: number
+  total: number
+}
+
+// Calcular desglose de pago para un módulo
+export function calcularDesglosePago(horas: number, config: ConfigPago = CONFIG_PAGO_DEFAULT): DesglosePago {
+  if (horas <= 0) return { dias: 0, horasDia: 0, costoDias: 0, horasExtra: 0, bloquesExtra: 0, costoExtra: 0, total: 0 }
+
+  const dias = Math.floor(horas / config.horasPorDia)
+  const horasRestantes = horas % config.horasPorDia
+  const bloquesExtra = Math.ceil(horasRestantes / config.horasPorBloqueExtra)
+
+  const costoDias = dias * config.tarifaDia
+  const costoExtra = bloquesExtra * config.tarifaExtra
+  const total = costoDias + costoExtra
+
+  return {
+    dias,
+    horasDia: dias * config.horasPorDia,
+    costoDias,
+    horasExtra: horasRestantes,
+    bloquesExtra,
+    costoExtra,
+    total,
+  }
+}
+
 
 export interface Quincena {
   id: string       // "2026-06-Q1" o "2026-06-Q2"

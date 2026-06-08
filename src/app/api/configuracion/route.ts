@@ -35,46 +35,49 @@ export async function POST(request: Request) {
 
     if (tarifaDiaStr !== undefined || horasDiaStr !== undefined) {
       // Leer valores actuales de DB si no vienen en el body
-      const cfgTarifa = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
-      const cfgHoras  = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
+      const cfgTarifa     = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_dia' } })
+      const cfgHoras      = await prisma.configuracion.findUnique({ where: { clave: 'horas_dia' } })
+      const cfgExtra      = await prisma.configuracion.findUnique({ where: { clave: 'tarifa_extra' } })
+      const cfgBloqueExtra = await prisma.configuracion.findUnique({ where: { clave: 'horas_bloque_extra' } })
 
-      const tarifaDia  = parseFloat(tarifaDiaStr  ?? cfgTarifa?.valor ?? '500')
-      const horasDia   = parseFloat(horasDiaStr   ?? cfgHoras?.valor  ?? '4')
-      const tarifaHora = horasDia > 0 ? tarifaDia / horasDia : 0
+      const tarifaDia       = parseFloat(tarifaDiaStr ?? cfgTarifa?.valor ?? '350')
+      const horasDia        = parseFloat(horasDiaStr  ?? cfgHoras?.valor  ?? '6')
+      const tarifaExtra     = parseFloat(body.tarifa_extra ?? cfgExtra?.valor ?? '550')
+      const horasBloqueExtra = parseFloat(body.horas_bloque_extra ?? cfgBloqueExtra?.valor ?? '2')
+      const tarifaHora      = horasDia > 0 ? tarifaDia / horasDia : 0
 
       // Obtener todos los módulos que usan tarifa por hora o por día
       const modulos = await prisma.modulo.findMany({
         where: { modoPago: { in: ['POR_HORA', 'POR_DIA'] } },
       })
 
-      // Recalcular montoTotal para cada uno
+      // Recalcular montoTotal con sistema de días + horas extra
       await Promise.all(
         modulos.map((m) => {
           let montoTotal: number
 
           if (m.modoPago === 'POR_HORA') {
-            montoTotal = tarifaHora * m.horasEstimadas
+            // Sistema: días completos + bloques extra
+            const dias = Math.floor(m.horasEstimadas / horasDia)
+            const horasRestantes = m.horasEstimadas % horasDia
+            const bloquesExtra = Math.ceil(horasRestantes / horasBloqueExtra)
+            montoTotal = (dias * tarifaDia) + (bloquesExtra * tarifaExtra)
           } else {
-            // POR_DIA
-            const dias = Math.ceil(m.horasEstimadas / 8) || 1
-            montoTotal = tarifaDia * dias
+            // POR_DIA: usar ceil para contar días completos
+            const dias = Math.ceil(m.horasEstimadas / horasDia)
+            montoTotal = dias * tarifaDia
           }
 
-          // Recalcular pagado
           const pagado = m.montoPagado >= montoTotal && montoTotal > 0
 
           return prisma.modulo.update({
             where: { id: m.id },
-            data: {
-              tarifaHora,
-              montoTotal,
-              pagado,
-            },
+            data: { tarifaHora, montoTotal, pagado },
           })
         })
       )
 
-      console.log(`Recalculados ${modulos.length} módulos con tarifa $${tarifaHora.toFixed(2)}/hr`)
+      console.log(`Recalculados ${modulos.length} módulos con tarifa $${tarifaDia}/día (${horasDia}h) + $${tarifaExtra}/extra (${horasBloqueExtra}h)`)
     }
 
     return NextResponse.json({ success: true })

@@ -189,7 +189,92 @@ export default function ImportarPage() {
             <Upload size={12} /> {importandoEjemplo ? 'Importando...' : 'Importar 22 módulos de ejemplo'}
           </button>
         </div>
+
+        {/* Recalcular precios */}
+        <RecalcularSection isMobile={isMobile} />
       </div>
+    </div>
+  )
+}
+
+// ── Sección de recálculo de precios ──────────────────────────────────────────
+function RecalcularSection({ isMobile }: { isMobile: boolean }) {
+  const [recalculando, setRecalculando] = useState(false)
+  const [resultado, setResultado] = useState<{ success: boolean; mensaje?: string; error?: string; actualizados?: number; tarifas?: { tarifaDia: number; horasDia: number; tarifaExtra: number } } | null>(null)
+  const [desde, setDesde] = useState('2026-06-01')
+
+  const handleRecalcular = async () => {
+    if (!confirm(`¿Recalcular precios de todos los módulos desde ${desde} con las tarifas actuales ($350/día + $200/hr extra)?`)) return
+    setRecalculando(true)
+    setResultado(null)
+    try {
+      const res = await fetch('/api/recalcular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ desde }),
+      })
+      setResultado(await res.json())
+    } catch {
+      setResultado({ success: false, error: 'Error de conexión' })
+    } finally {
+      setRecalculando(false)
+    }
+  }
+
+  return (
+    <div style={{ backgroundColor: '#1a1a24', border: '1px solid #7c3aed30', borderRadius: '10px', padding: isMobile ? '14px' : '18px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <span style={{ fontWeight: '600', color: '#a78bfa', fontSize: '12px' }}>⚡ RECALCULAR PRECIOS</span>
+      </div>
+      <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '12px', lineHeight: '1.5' }}>
+        Recalcula el monto de todos los módulos desde la fecha indicada aplicando las tarifas actuales
+        (<strong style={{ color: '#e2e8f0' }}>$350/día + $200/hr extra</strong>).
+      </p>
+
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', marginBottom: '12px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '160px' }}>
+          <label style={{ fontSize: '10px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
+            Desde (fecha)
+          </label>
+          <input
+            type="date"
+            value={desde}
+            onChange={e => setDesde(e.target.value)}
+            style={{ fontSize: '13px', colorScheme: 'dark' }}
+          />
+        </div>
+        <button
+          onClick={handleRecalcular}
+          disabled={recalculando}
+          style={{
+            backgroundColor: '#7c3aed', color: 'white',
+            display: 'flex', alignItems: 'center', gap: '6px',
+            fontSize: '13px', padding: '8px 16px',
+          }}
+        >
+          {recalculando ? 'Recalculando...' : '⚡ Recalcular'}
+        </button>
+      </div>
+
+      {resultado && (
+        <div style={{
+          backgroundColor: resultado.success ? '#10b98112' : '#ef444412',
+          border: `1px solid ${resultado.success ? '#10b98130' : '#ef444430'}`,
+          borderRadius: '8px', padding: '10px 14px', fontSize: '12px',
+          color: resultado.success ? '#34d399' : '#f87171',
+        }}>
+          {resultado.success ? (
+            <>
+              <div style={{ fontWeight: '600', marginBottom: '4px' }}>✓ {resultado.mensaje}</div>
+              {resultado.tarifas && (
+                <div style={{ color: '#6b7280', fontSize: '11px' }}>
+                  Tarifas usadas: ${resultado.tarifas.tarifaDia}/día ({resultado.tarifas.horasDia}h) + ${resultado.tarifas.tarifaExtra}/hr extra
+                </div>
+              )}
+            </>
+          ) : resultado.error}
+        </div>
+      )}
     </div>
   )
 }

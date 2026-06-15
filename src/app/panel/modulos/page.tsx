@@ -76,12 +76,12 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
   // Config de pago por módulo
   const [tarifaDia, setTarifaDia]           = useState('350')
   const [horasPorDia, setHorasPorDia]       = useState('6')
-  const [tarifaExtra, setTarifaExtra]       = useState('550')
+  const [tarifaExtra, setTarifaExtra]       = useState('200')
   const [horasBloqueExtra, setHorasBloqueExtra] = useState('2')
   // Valores iniciales para detectar cambios
   const [tarifaDiaInit, setTarifaDiaInit]       = useState('350')
   const [horasPorDiaInit, setHorasPorDiaInit]   = useState('6')
-  const [tarifaExtraInit, setTarifaExtraInit]   = useState('550')
+  const [tarifaExtraInit, setTarifaExtraInit]   = useState('200')
 
   // Cargar config desde servidor
   useEffect(() => {
@@ -89,7 +89,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
       if (cfg && !cfg.error) {
         const td = cfg.tarifa_dia || '350'
         const hd = cfg.horas_dia || '6'
-        const te = cfg.tarifa_extra || '550'
+        const te = cfg.tarifa_extra || '200'
         setTarifaDia(td); setTarifaDiaInit(td)
         setHorasPorDia(hd); setHorasPorDiaInit(hd)
         setTarifaExtra(te); setTarifaExtraInit(te)
@@ -113,7 +113,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
     if (modoPago === 'MONTO_FIJO') return parseFloat(montoFijo) || 0
     const td = parseFloat(tarifaDia) || 350
     const hd = parseFloat(horasPorDia) || 6
-    const te = parseFloat(tarifaExtra) || 550
+    const te = parseFloat(tarifaExtra) || 200
     // Si el usuario definió horas normales y extras manualmente, usar esas
     if (horasNormales || horasExtraVal) {
       const hn = parseFloat(horasNormales) || 0
@@ -366,7 +366,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                   {(() => {
                     const hd = parseFloat(horasPorDia) || 6
                     const td = parseFloat(tarifaDia) || 350
-                    const te = parseFloat(tarifaExtra) || 550
+                    const te = parseFloat(tarifaExtra) || 200
                     const base = parseFloat(horasReales || horasEstimadas) || 0
                     const hn = horasNormales ? parseFloat(horasNormales) : Math.floor(base / hd) * hd
                     const he = horasExtraVal ? parseFloat(horasExtraVal) : base % hd

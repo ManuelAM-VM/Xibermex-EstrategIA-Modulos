@@ -299,24 +299,97 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
 
           {/* Horas */}
           <div>
-            <SectionTitle>Horas</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '10px' }}>
-              <div><label style={labelSt}>Estimadas</label>
+            <SectionTitle>Horas de trabajo</SectionTitle>
+
+            {/* Totales */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+              <div>
+                <label style={labelSt}>Horas estimadas</label>
                 <input type="number" value={horasEstimadas} onChange={e => setHorasEstimadas(e.target.value)} min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
               </div>
-              <div><label style={labelSt}>Reales trabajadas</label>
+              <div>
+                <label style={labelSt}>Horas reales totales</label>
                 <input type="number" value={horasReales} onChange={e => setHorasReales(e.target.value)} placeholder="—" min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
               </div>
-              <div><label style={labelSt}>Hrs normales</label>
-                <input type="number" value={horasNormales} onChange={e => setHorasNormales(e.target.value)} placeholder="Auto" min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
-              </div>
-              <div><label style={labelSt}>Hrs extra</label>
-                <input type="number" value={horasExtraVal} onChange={e => setHorasExtraVal(e.target.value)} placeholder="Auto" min="0" step="0.5" style={{ fontSize: isMobile ? '14px' : '13px' }} />
-              </div>
             </div>
-            <p style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px' }}>
-              Si defines hrs normales y extras manualmente, el cálculo usará esos valores. Si los dejas en blanco, se calcula automáticamente.
-            </p>
+
+            {/* Desglose día / extra */}
+            <div style={{ backgroundColor: '#0f0f16', border: '1px solid #252535', borderRadius: '10px', padding: '12px 14px' }}>
+              <p style={{ fontSize: '11px', color: '#6b7280', marginBottom: '10px' }}>
+                Desglose — define cuántas horas fueron regulares de día y cuántas extra.
+                Si lo dejas en blanco se calcula automáticamente.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div>
+                  <label style={{ ...labelSt, color: '#60a5fa' }}>Horas de día</label>
+                  <input
+                    type="number"
+                    value={horasNormales}
+                    onChange={e => {
+                      setHorasNormales(e.target.value)
+                      // Auto-calcular extras si hay total real
+                      if (horasReales && e.target.value) {
+                        const total = parseFloat(horasReales) || 0
+                        const norm = parseFloat(e.target.value) || 0
+                        if (total > norm) setHorasExtraVal(String(+(total - norm).toFixed(1)))
+                      }
+                    }}
+                    placeholder={`Auto (${Math.floor((parseFloat(horasReales || horasEstimadas) || 0) / (parseFloat(horasPorDia) || 6)) * (parseFloat(horasPorDia) || 6)}h)`}
+                    min="0" step="0.5"
+                    style={{ fontSize: isMobile ? '14px' : '13px', borderColor: horasNormales ? '#3b82f640' : undefined }}
+                  />
+                </div>
+                <div>
+                  <label style={{ ...labelSt, color: '#f59e0b' }}>Horas extra</label>
+                  <input
+                    type="number"
+                    value={horasExtraVal}
+                    onChange={e => {
+                      setHorasExtraVal(e.target.value)
+                      // Auto-calcular normales si hay total real
+                      if (horasReales && e.target.value) {
+                        const total = parseFloat(horasReales) || 0
+                        const extra = parseFloat(e.target.value) || 0
+                        if (total > extra) setHorasNormales(String(+(total - extra).toFixed(1)))
+                      }
+                    }}
+                    placeholder={`Auto (${((parseFloat(horasReales || horasEstimadas) || 0) % (parseFloat(horasPorDia) || 6)).toFixed(1)}h)`}
+                    min="0" step="0.5"
+                    style={{ fontSize: isMobile ? '14px' : '13px', borderColor: horasExtraVal ? '#f59e0b40' : undefined }}
+                  />
+                </div>
+              </div>
+
+              {/* Preview del desglose */}
+              {(horasNormales || horasExtraVal || horasReales || horasEstimadas) && (
+                <div style={{ display: 'flex', gap: '16px', fontSize: '12px', flexWrap: 'wrap' }}>
+                  {(() => {
+                    const hd = parseFloat(horasPorDia) || 6
+                    const td = parseFloat(tarifaDia) || 350
+                    const te = parseFloat(tarifaExtra) || 550
+                    const base = parseFloat(horasReales || horasEstimadas) || 0
+                    const hn = horasNormales ? parseFloat(horasNormales) : Math.floor(base / hd) * hd
+                    const he = horasExtraVal ? parseFloat(horasExtraVal) : base % hd
+                    const dias = Math.ceil(hn / hd) || (hn > 0 ? 1 : 0)
+                    return (
+                      <>
+                        <span style={{ color: '#60a5fa' }}>
+                          {dias} día(s) × ${td} = <strong>${(dias * td).toFixed(0)}</strong>
+                        </span>
+                        {he > 0 && (
+                          <span style={{ color: '#f59e0b' }}>
+                            {he}h extra × ${te} = <strong>${(he * te).toFixed(0)}</strong>
+                          </span>
+                        )}
+                        <span style={{ color: '#a78bfa', marginLeft: 'auto', fontWeight: '700' }}>
+                          Total: ${(dias * td + he * te).toFixed(0)}
+                        </span>
+                      </>
+                    )
+                  })()}
+                </div>
+              )}
+            </div>
           </div>
 
           <div style={{ height: '1px', backgroundColor: '#1e1e2e' }} />

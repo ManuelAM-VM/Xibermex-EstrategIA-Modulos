@@ -46,8 +46,14 @@ export async function POST(request: Request) {
         montoTotal = (dias * tarifaDia) + (horasExt * tarifaExtra)
       } else {
         const dias = Math.floor(m.horasEstimadas / horasDia)
-        const horasRestantes = m.horasEstimadas % horasDia
-        montoTotal = (dias * tarifaDia) + (horasRestantes * tarifaExtra)
+        let horasRestantes = m.horasEstimadas % horasDia
+        // Si hay horas restantes, contarlas como un día completo
+        if (horasRestantes > 0) {
+          montoTotal = (dias + 1) * tarifaDia
+          horasRestantes = 0
+        } else {
+          montoTotal = (dias * tarifaDia)
+        }
       }
 
       const pagado = m.montoPagado >= montoTotal && montoTotal > 0

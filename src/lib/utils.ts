@@ -102,11 +102,23 @@ export function calcularDesglosePago(horas: number, config: ConfigPago = CONFIG_
   if (horas <= 0) return { dias: 0, horasDia: 0, costoDias: 0, horasExtra: 0, bloquesExtra: 0, costoExtra: 0, total: 0 }
 
   const dias = Math.floor(horas / config.horasPorDia)
-  const horasRestantes = horas % config.horasPorDia
+  let horasRestantes = horas % config.horasPorDia
+  // Si hay horas restantes, contarlas como día completo (no cobrar por hora extra)
+  if (horasRestantes > 0) {
+    const costoDias = (dias + 1) * config.tarifaDia
+    return {
+      dias: dias + 1,
+      horasDia: (dias + 1) * config.horasPorDia,
+      costoDias,
+      horasExtra: 0,
+      bloquesExtra: 0,
+      costoExtra: 0,
+      total: costoDias,
+    }
+  }
+
   // Cada hora extra se cobra a tarifaExtra, pero se redondea hacia arriba en bloques
   const bloquesExtra = Math.ceil(horasRestantes / config.horasPorBloqueExtra)
-  // El costo es por hora extra (bloquesExtra × horasPorBloque × tarifa por hora extra... no)
-  // En realidad: cada hora extra se paga a tarifaExtra
   const costoExtra = horasRestantes * config.tarifaExtra
 
   const costoDias = dias * config.tarifaDia

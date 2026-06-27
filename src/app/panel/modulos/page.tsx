@@ -123,8 +123,11 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
     }
     // Si no, calcular automáticamente
     const dias = Math.floor(horasActivas / hd)
-    const horasRestantes = horasActivas % hd
-    return (dias * td) + (horasRestantes * te)
+    let horasRestantes = horasActivas % hd
+    if (horasRestantes > 0) {
+      return (dias + 1) * td
+    }
+    return (dias * td)
   })()
 
   const estadoColor = ESTADO_COLORS[estado] || { bg: '#2a2a3a', text: '#9ca3af' }
@@ -463,7 +466,15 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <p style={{ fontSize: '11px', color: '#4b5563', marginBottom: '2px' }}>
-                      {modoPago === 'MONTO_FIJO' ? 'Monto fijo' : `${Math.floor(horasActivas / (parseFloat(horasPorDia) || 6))}d × $${tarifaDia} + ${(horasActivas % (parseFloat(horasPorDia) || 6)).toFixed(0)}h extra × $${tarifaExtra}`}
+                      {modoPago === 'MONTO_FIJO' ? 'Monto fijo' : (() => {
+                        const hd = parseFloat(horasPorDia) || 6
+                        const td = tarifaDia
+                        const te = tarifaExtra
+                        const dias = Math.floor(horasActivas / hd)
+                        const horasRest = horasActivas % hd
+                        if (horasRest > 0) return `${dias + 1}d × $${td}`
+                        return `${dias}d × $${td}`
+                      })()}
                     </p>
                     <p style={{ fontSize: '22px', fontWeight: '800', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
                   </div>

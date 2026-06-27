@@ -70,8 +70,14 @@ export async function PATCH(
         montoTotal = (diasManuales * tarifaDiaCfg) + ((he || 0) * tarifaExtraCfg)
       } else {
         const dias = Math.floor(horasParaCalculo / horasDiaCfg)
-        const horasRestantes = horasParaCalculo % horasDiaCfg
-        montoTotal = (dias * tarifaDiaCfg) + (horasRestantes * tarifaExtraCfg)
+        let horasRestantes = horasParaCalculo % horasDiaCfg
+        // Si hay horas restantes, contarlas como un día completo (no cobrar por hora extra)
+        if (horasRestantes > 0) {
+          montoTotal = (dias + 1) * tarifaDiaCfg
+          horasRestantes = 0
+        } else {
+          montoTotal = (dias * tarifaDiaCfg)
+        }
       }
 
       // Limpiar campos virtuales antes de guardar

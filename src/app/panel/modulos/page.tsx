@@ -156,6 +156,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
           descripcion: descripcion || null,
           tipoTarea, complejidad, modoPago,
           tarifaHora: parseFloat(tarifaDia) / parseFloat(horasPorDia) || 58,
+          montoTotal: montoPreview,
           montoFijo: modoPago === 'MONTO_FIJO' ? (parseFloat(montoFijo) || null) : null,
           _horasParaPago: horasActivas,
           _tarifaDia: tarifaDia,

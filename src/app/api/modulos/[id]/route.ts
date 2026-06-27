@@ -93,6 +93,11 @@ export async function PATCH(
       montoTotal = montoFijo ?? actual.montoTotal
     }
 
+    // Si el cliente envió un `montoTotal` explícito (p. ej. calculado en el modal), usarlo como fuente de verdad
+    if (bodyLimpio.montoTotal != null) {
+      montoTotal = parseFloat(bodyLimpio.montoTotal as any)
+    }
+
     const montoPagado = actual.montoPagado
     const pagado = montoTotal != null && montoPagado >= montoTotal && montoTotal > 0
 

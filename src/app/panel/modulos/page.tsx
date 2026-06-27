@@ -72,6 +72,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
   const [modoPago, setModoPago]             = useState(modulo.modoPago ?? 'POR_HORA')
   const [tarifa, setTarifa]                 = useState(String(modulo.tarifaHora ?? 350))
   const [montoFijo, setMontoFijo]           = useState(String(modulo.montoFijo ?? ''))
+  const [montoManual, setMontoManual]       = useState(String(modulo.montoTotal ?? ''))
   const [baseHoras, setBaseHoras]           = useState<'ESTIMADAS' | 'REALES'>('ESTIMADAS')
   // Config de pago por módulo
   const [tarifaDia, setTarifaDia]           = useState('350')
@@ -137,6 +138,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
     tipoTarea !== modulo.tipoTarea || complejidad !== modulo.complejidad ||
     modoPago !== (modulo.modoPago ?? 'POR_HORA') || tarifa !== String(modulo.tarifaHora ?? 350) ||
     montoFijo !== String(modulo.montoFijo ?? '') ||
+    montoManual !== String(modulo.montoTotal ?? '') ||
     horasNormales !== String(modulo.horasNormales ?? '') ||
     horasExtraVal !== String(modulo.horasExtra ?? '') ||
     tarifaDia !== tarifaDiaInit || horasPorDia !== horasPorDiaInit || tarifaExtra !== tarifaExtraInit
@@ -156,7 +158,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
           descripcion: descripcion || null,
           tipoTarea, complejidad, modoPago,
           tarifaHora: parseFloat(tarifaDia) / parseFloat(horasPorDia) || 58,
-          montoTotal: montoPreview,
+          montoTotal: montoManual ? parseFloat(montoManual) : montoPreview,
           montoFijo: modoPago === 'MONTO_FIJO' ? (parseFloat(montoFijo) || null) : null,
           _horasParaPago: horasActivas,
           _tarifaDia: tarifaDia,
@@ -432,7 +434,10 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                       {modulo.pagado ? 'Pagado' : 'Sin pagar'}
                     </span>
                   </div>
-                  <p style={{ fontSize: '24px', fontWeight: '800', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '20px', fontWeight: '700', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
+                    <input type="number" value={montoManual} onChange={e => setMontoManual(e.target.value)} placeholder="Monto manual (opcional)" style={{ marginTop: '6px', width: '120px', fontSize: '13px', textAlign: 'right' }} />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -478,6 +483,7 @@ function ModuloModal({ modulo, onClose, onUpdate }: {
                       })()}
                     </p>
                     <p style={{ fontSize: '22px', fontWeight: '800', color: '#a78bfa', margin: 0, letterSpacing: '-0.5px' }}>${montoPreview.toFixed(0)}</p>
+                    <input type="number" value={montoManual} onChange={e => setMontoManual(e.target.value)} placeholder="Monto manual (opcional)" style={{ marginTop: '6px', width: '140px', fontSize: '13px', textAlign: 'right' }} />
                   </div>
                 </div>
               </>
